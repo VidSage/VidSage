@@ -1,0 +1,112 @@
+/* VideoUpload.css */
+
+/* General Styling */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5; /* Light grey background for the page */
+}
+
+/* Upload Section */
+.upload-section {
+  background-color: #d9d9d9; /* Greyish background for the upload section */
+  padding: 40px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 40px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.upload-section h1 {
+  color: #333;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.upload-section p {
+  color: #666;
+  font-size: 16px;
+}
+
+.ant-upload.ant-upload-drag {
+  background-color: #fafafa;
+  border: 1px dashed #bfbfbf;
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.ant-upload-drag-icon {
+  font-size: 32px;
+  color: #1890ff;
+}
+
+.upload-buttons {
+  margin-top: 20px;
+}
+
+.upload-buttons .ant-btn-default {
+  background-color: #ffffff; /* White button for cancel */
+  color: #333; /* Dark grey text */
+  border: 1px solid #ccc; /* Light grey border */
+}
+
+.upload-buttons .ant-btn-default:hover {
+  background-color: #f0f0f0; /* Light grey hover */
+  color: #000; /* Darker text on hover */
+}
+
+.upload-buttons .ant-btn-primary {
+  background-color: #0056b3; /* Darker blue */
+  border-color: #0056b3;
+  color: #fff;
+}
+
+.upload-buttons .ant-btn-primary:hover {
+  background-color: #004099; /* Even darker blue for hover */
+  border-color: #004099;
+}
+
+/* Uploaded Videos Section */
+.uploaded-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.uploaded-section h2 {
+  color: #333;
+  font-size: 24px;
+}
+
+.uploaded-section p {
+  color: #666;
+  font-size: 16px;
+}
+
+.ant-card {
+  border-radius: 8px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ant-card-title {
+  font-weight: bold;
+  color: #333;
+}
+
+.ant-card .ant-btn {
+  margin-right: 5px;
+  background-color: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #91d5ff;
+}
+
+.ant-card .ant-btn:hover {
+  background-color: #bae7ff;
+  color: #0050b3;
+  border-color: #40a9ff;
+}
+
+.ant-card .uploader {
+  font-style: italic;
+  color: #999;
+}
