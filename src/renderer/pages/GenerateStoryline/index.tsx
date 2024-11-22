@@ -1,21 +1,46 @@
 import React, { useState } from 'react';
 import { Typography, Input, Button, Space, InputNumber } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useAtomValue, useSetAtom } from 'jotai';
+import storylineAtom from '../../states/storyline';
+import summaryAtom from '../../states/summary';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 function GenerateStoryline() {
+  const [prompt, setPrompt] = useState('');
   const [duration, setDuration] = useState(3);
 
+  const setStorylineAtom = useSetAtom(storylineAtom);
+  const summary = useAtomValue(summaryAtom);
+
   const navigate = useNavigate();
+
+  const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPrompt(e.target.value);
+  };
+
+  const generateStoryline = async () => {
+    const storyline = await window.electron.ipcRenderer.invoke(
+      'gen-storyline',
+      {
+        prompt,
+        duration,
+        summary,
+      },
+    );
+    setStorylineAtom(storyline);
+  };
 
   const handleBack = () => {
     navigate('/storyline');
   };
 
   const handleGenerate = () => {
-    navigate('/summary');
+    generateStoryline()
+      .then(() => navigate('/summary'))
+      .catch(console.error);
   };
 
   return (
@@ -29,7 +54,9 @@ function GenerateStoryline() {
           maxLength={100}
           placeholder="自然语言描述需要生成怎样的视频？e.g. 生成一个XX风格的视频"
           showCount
+          onChange={handlePromptChange}
           style={{ width: '100%', marginTop: '20px' }}
+          value={prompt}
         />
       </div>
 

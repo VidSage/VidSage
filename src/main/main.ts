@@ -14,6 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import { generateSummaries, generateStoryline, generateVideo } from './vidSage';
 
 class AppUpdater {
   constructor() {
@@ -29,6 +30,21 @@ ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
+});
+
+ipcMain.handle('gen-summary', async (event, args) => {
+  const summaries = await generateSummaries(args);
+  return summaries;
+});
+
+ipcMain.handle('gen-storyline', async (event, args) => {
+  const segments = await generateStoryline(args);
+  return segments;
+});
+
+ipcMain.handle('gen-video', async (event, args) => {
+  const preview = await generateVideo(args);
+  return preview;
 });
 
 if (process.env.NODE_ENV === 'production') {

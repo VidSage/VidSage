@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Button, List, Typography, Space, Avatar, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useSetAtom } from 'jotai';
+import summaryAtom from '../../states/summary';
+import type { VideoFile } from '../../../main/types';
 
 const dummyDescription =
   'Ant Design, a design language for background applications, is refined by Ant UED Team.';
@@ -10,8 +13,24 @@ function VideoUpload() {
   const [videos, setVideos] = useState<string[]>([]);
   const navigate = useNavigate();
 
+  const setSummaryAtom = useSetAtom(summaryAtom);
+
+  const generateSummaries = async (files: VideoFile[]) => {
+    const summaries = await window.electron.ipcRenderer.invoke(
+      'gen-summary',
+      files,
+    );
+    setSummaryAtom(summaries);
+  };
+
   const handleViewSummaries = () => {
-    navigate('/storyline');
+    generateSummaries(
+      videos.map((video) => ({ name: video, absolutePath: video })),
+    )
+      .then(() => navigate('/storyline'))
+      .catch((err) => {
+        console.error(err);
+      });
   };
 
   const handleAddVideos = () => {

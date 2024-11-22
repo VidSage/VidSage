@@ -1,11 +1,14 @@
 import React from 'react';
 import { Typography, Button, Space } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useAtomValue } from 'jotai';
+import previewAtom from '../../states/preview';
 
 const { Title, Text } = Typography;
 
 function VideoPreview() {
   const navigate = useNavigate();
+  const preview = useAtomValue(previewAtom);
   const handleBack = () => {
     navigate('/summary');
   };
@@ -29,7 +32,7 @@ function VideoPreview() {
           alignItems: 'center',
         }}
       >
-        <Text type="secondary">Video Placeholder</Text>
+        <Text type="secondary">{preview || 'Video Placeholder'}</Text>
       </div>
 
       <div style={{ marginTop: '30px' }}>
