@@ -1,17 +1,31 @@
 /* eslint-disable no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { spawnSync } from 'child_process';
 import type { VideoFile, VideoSummary, Segment } from './types';
 import { readJSONFile, writeJSONFile } from './util';
 
+/**
+ * generate video summaries given a list of video files and a task ID
+ * saves args object in inputJSONAbsPath file and invokes the Python script
+ * reads the result from outputJSONAbsPath file and returns it
+ * @param args - taskId: string, files: VideoFile[]
+ * @returns a list of VideoSummary objects
+ */
 async function generateSummaries(args: {
+  taskId: string;
   files: VideoFile[];
 }): Promise<VideoSummary[]> {
   // const inputJSONAbsPath = 'TODO';
   // const outputJSONAbsPath = 'TODO';
   // await writeJSONFile(inputJSONAbsPath, args);
-  // TODO: invoke the Python script to generate summaries synchronously
-  // const result = await readJSONFile(outputJSONAbsPath);
-  // return result as VideoSummary[];
+  // const result = spawnSync('python', [
+  //   'src/main/vidSage.py',
+  //   'generateSummaries',
+  //   inputJSONAbsPath,
+  //   outputJSONAbsPath,
+  // ]);
+  // const data = await readJSONFile(outputJSONAbsPath);
+  // return data as VideoSummary[];
 
   // temp mock data
   return [
@@ -140,7 +154,15 @@ async function generateSummaries(args: {
   ];
 }
 
+/**
+ * generate a storyline based on provided video summaries and a user prompt
+ * saves args object in inputJSONAbsPath file and invokes the Python script
+ * reads the result from outputJSONAbsPath file and returns it
+ * @param args - taskId: string, summaries: VideoSummary[], prompt: string, duration: number
+ * @returns a list of Segment objects representing the storyline
+ */
 async function generateStoryline(args: {
+  taskId: string;
   summaries: VideoSummary[];
   prompt: string;
   duration: number;
@@ -148,9 +170,14 @@ async function generateStoryline(args: {
   // const inputJSONAbsPath = 'TODO';
   // const outputJSONAbsPath = 'TODO';
   // await writeJSONFile(inputJSONAbsPath, args);
-  // TODO: invoke the Python script to generate summaries synchronously
-  // const result = await readJSONFile(outputJSONAbsPath);
-  // return result as Segment[];
+  // const result = spawnSync('python', [
+  //   'src/main/vidSage.py',
+  //   'generateStoryline',
+  //   inputJSONAbsPath,
+  //   outputJSONAbsPath,
+  // ]);
+  // const data = await readJSONFile(outputJSONAbsPath);
+  // return data as Segment[];
 
   // temp mock data
   return [
@@ -187,11 +214,28 @@ async function generateStoryline(args: {
   ];
 }
 
-async function generateVideo(args: { segments: Segment[] }): Promise<string> {
-  const inputJSONAbsPath = 'TODO';
-  const outputVideoAbsPath = '/Users/bob/Downloads/output.mp4';
-  await writeJSONFile(inputJSONAbsPath, args);
-  // TODO: invoke the Python script to generate summaries synchronously
+/**
+ * generate a final video using a list of segments
+ * saves args object in inputJSONAbsPath file and invokes the Python script
+ * returns the absolute path to the generated video file
+ * Note: the python script should generate the video file in the designated output path
+ * and should not produce a JSON file
+ * @param args - taskId: string, segments: Segment[]
+ * @returns the absolute file path to the generated video
+ */
+async function generateVideo(args: {
+  taskId: string;
+  segments: Segment[];
+}): Promise<string> {
+  // const inputJSONAbsPath = 'TODO';
+  const outputVideoAbsPath = '/path/to/video.mp4';
+  // await writeJSONFile(inputJSONAbsPath, args);
+  // const result = spawnSync('python', [
+  //   'src/main/vidSage.py',
+  //   'generateVideo',
+  //   inputJSONAbsPath,
+  //   outputVideoAbsPath,
+  // ]);
   return outputVideoAbsPath;
 }
 
