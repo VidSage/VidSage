@@ -9,7 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -45,6 +45,23 @@ ipcMain.handle('gen-storyline', async (event, args) => {
 ipcMain.handle('gen-video', async (event, args) => {
   const preview = await generateVideo(args);
   return preview;
+});
+
+ipcMain.handle('select-videos', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Select Video Files',
+    buttonLabel: 'Add Videos',
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      { name: 'Videos', extensions: ['mp4', 'mkv', 'avi', 'mov'] }, // Filter for video files
+    ],
+  });
+
+  // Return the file paths if files are selected
+  if (!result.canceled) {
+    return result.filePaths;
+  }
+  return [];
 });
 
 if (process.env.NODE_ENV === 'production') {

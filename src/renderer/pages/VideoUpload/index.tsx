@@ -6,9 +6,6 @@ import { useSetAtom } from 'jotai';
 import summaryAtom from '../../states/summary';
 import type { VideoFile } from '../../../main/types';
 
-const dummyDescription =
-  'Ant Design, a design language for background applications, is refined by Ant UED Team.';
-
 function VideoUpload() {
   const [videos, setVideos] = useState<string[]>([]);
   const navigate = useNavigate();
@@ -33,11 +30,20 @@ function VideoUpload() {
       });
   };
 
-  const handleAddVideos = () => {
-    // Simulate adding videos (in real scenario, you'd use a file picker dialog)
-    const newVideo = `Filename${videos.length + 1}.mp4`;
-    setVideos((prev) => [...prev, newVideo]);
-    message.success(`${newVideo} added to the list.`);
+  const handleAddVideos = async () => {
+    try {
+      const filePaths =
+        await window.electron.ipcRenderer.invoke('select-videos');
+      if (filePaths.length > 0) {
+        setVideos((prev) => [...prev, ...filePaths]);
+        message.success(`${filePaths.length} video(s) added to the list.`);
+      } else {
+        message.info('No video files were selected.');
+      }
+    } catch (error) {
+      console.error('Error selecting videos:', error);
+      message.error('Failed to add videos.');
+    }
   };
 
   const handleRemoveVideo = (index: number) => {
@@ -83,7 +89,6 @@ function VideoUpload() {
               <List.Item.Meta
                 avatar={<Avatar>{item[0]}</Avatar>}
                 title={item}
-                description={dummyDescription}
               />
             </List.Item>
           )}
