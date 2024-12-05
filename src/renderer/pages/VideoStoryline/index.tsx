@@ -3,6 +3,7 @@ import { Typography, Collapse, List, Avatar, Rate, Button, Space } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import summaryAtom from '../../states/summary';
+import { getTimeStamp } from '../../common/util';
 
 const { Title, Text } = Typography;
 const { Panel } = Collapse;
@@ -50,7 +51,7 @@ function VideoStoryline() {
                   renderItem={(segment) => (
                     <List.Item>
                       <Text>
-                        {`${segment.startTimeSec.toFixed(2)} - ${segment.endTimeSec.toFixed(2)}: ${segment.description}`}
+                        {`${getTimeStamp(segment.startTimeSec)} - ${getTimeStamp(segment.endTimeSec)}: ${segment.description}`}
                       </Text>
                     </List.Item>
                   )}

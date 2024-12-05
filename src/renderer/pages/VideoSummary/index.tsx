@@ -5,6 +5,7 @@ import { useAtomValue, useAtom } from 'jotai';
 import storylineAtom from '../../states/storyline';
 import previewAtom from '../../states/preview';
 import summaryAtom from '../../states/summary';
+import { getTimeStamp } from '../../common/util';
 
 const { Title, Text } = Typography;
 const { Panel } = Collapse;
@@ -28,8 +29,7 @@ function VideoSummary() {
     setPreviewAtom(newPreview);
   };
 
-  const handleSave = () => {
-  };
+  const handleSave = () => {};
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
@@ -56,7 +56,7 @@ function VideoSummary() {
                   renderItem={(segment) => (
                     <List.Item>
                       <Text>
-                        {`${segment.startTimeSec.toFixed(2)} - ${segment.endTimeSec.toFixed(2)}: ${segment.description}`}
+                        {`${getTimeStamp(segment.startTimeSec)} - ${getTimeStamp(segment.endTimeSec)}: ${segment.description}`}
                       </Text>
                     </List.Item>
                   )}
@@ -78,8 +78,8 @@ function VideoSummary() {
               <List.Item>
                 <Text>
                   <strong>[{segment.srcFile?.name || 'Summary'}]</strong>{' '}
-                  {segment.startTimeSec.toFixed(2)} -{' '}
-                  {segment.endTimeSec.toFixed(2)} {segment.description}
+                  {`${getTimeStamp(segment.startTimeSec)} - ${getTimeStamp(segment.endTimeSec)}`}{' '}
+                  {segment.description}
                 </Text>
               </List.Item>
             )}
