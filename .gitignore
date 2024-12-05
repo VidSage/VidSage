@@ -29,3 +29,8 @@ npm-debug.log.*
 *.scss.d.ts
 
 .env
+
+tmp/
+
+# ignore pycache
+**/__pycache__/

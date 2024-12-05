@@ -13,7 +13,7 @@ class VideoFile:
 
 
 class Segment:
-    def __init__(self, startTimeSec: int, endTimeSec: int, description: str, src_file: Dict[str, str] = None):
+    def __init__(self, startTimeSec: int, endTimeSec: int, description: str, src_file: dict[str, str] = None):
         self.startTimeSec = startTimeSec
         self.endTimeSec = endTimeSec
         self.description = description
@@ -29,7 +29,7 @@ class Segment:
 
 
 class VideoSummary:
-    def __init__(self, file: VideoFile, summary: str, aesthetic_rating: int, segments: List[Segment]):
+    def __init__(self, file: VideoFile, summary: str, aesthetic_rating: int, segments: list[Segment]):
         self.file = file
         self.summary = summary
         self.aesthetic_rating = aesthetic_rating
