@@ -15,7 +15,6 @@ export default function App() {
         <Route path="/storyline" element={<VideoStoryline />} />
         <Route path="/generate" element={<GenerateStoryline />} />
         <Route path="/summary" element={<VideoSummary />} />
-        <Route path="/preview" element={<VideoPreview />} />
       </Routes>
     </Router>
   );

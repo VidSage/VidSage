@@ -6,7 +6,8 @@ export type Channels =
   | 'ipc-example'
   | 'gen-summary'
   | 'gen-storyline'
-  | 'gen-video';
+  | 'gen-video'
+  | 'select-videos';
 
 const electronHandler = {
   ipcRenderer: {

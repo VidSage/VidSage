@@ -27,7 +27,7 @@ function GenerateStoryline() {
       {
         prompt,
         duration,
-        summary,
+        summaries: summary,
       },
     );
     setStorylineAtom(storyline);

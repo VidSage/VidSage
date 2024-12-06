@@ -28,6 +28,12 @@ npm-debug.log.*
 *.sass.d.ts
 *.scss.d.ts
 
+vidSage/build
+vidSage/dist
+vidSage/main.spec
+
+release/app/vidSage
+
 .env
 
 tmp/

@@ -9,9 +9,11 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
+import { v4 as uuidv4 } from 'uuid';
+import { format } from 'date-fns';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import { generateSummaries, generateStoryline, generateVideo } from './vidSage';
@@ -24,6 +26,20 @@ class AppUpdater {
   }
 }
 
+function generateTimestampedUUID(): string {
+  // Get the current date and time
+  const now = new Date();
+
+  // Format the timestamp as 'yyyyMMddHHmmss'
+  const timestamp = format(now, 'yyyyMMddHHmmss');
+
+  // Generate a UUID
+  const uuid = uuidv4();
+
+  // Combine the timestamp and UUID
+  return `${timestamp}-${uuid}`;
+}
+
 let mainWindow: BrowserWindow | null = null;
 
 ipcMain.on('ipc-example', async (event, arg) => {
@@ -33,18 +49,46 @@ ipcMain.on('ipc-example', async (event, arg) => {
 });
 
 ipcMain.handle('gen-summary', async (event, args) => {
-  const summaries = await generateSummaries(args);
+  const summaries = await generateSummaries({
+    taskId: generateTimestampedUUID(),
+    files: args,
+  });
   return summaries;
 });
 
 ipcMain.handle('gen-storyline', async (event, args) => {
-  const segments = await generateStoryline(args);
+  const segments = await generateStoryline({
+    taskId: generateTimestampedUUID(),
+    summaries: args.summaries,
+    prompt: args.prompt,
+    duration: args.duration,
+  });
   return segments;
 });
 
 ipcMain.handle('gen-video', async (event, args) => {
-  const preview = await generateVideo(args);
+  const preview = await generateVideo({
+    taskId: generateTimestampedUUID(),
+    segments: args.storyline,
+  });
   return preview;
+});
+
+ipcMain.handle('select-videos', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Select Video Files',
+    buttonLabel: 'Add Videos',
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      { name: 'Videos', extensions: ['mp4', 'mkv', 'avi', 'mov'] }, // Filter for video files
+    ],
+  });
+
+  // Return the file paths if files are selected
+  if (!result.canceled) {
+    return result.filePaths;
+  }
+  return [];
 });
 
 if (process.env.NODE_ENV === 'production') {
