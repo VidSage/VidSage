@@ -9,8 +9,8 @@ import uuid
 if __name__ == "__main__":
     dotenv.load_dotenv()
 
-    if len(sys.argv) < 5:
-        print("Usage: python vidSage.py <command> <input_json_path> <output_path> <task_id>")
+    if len(sys.argv) != 4:
+        print("Usage: python vidSage.py <command> <input_json_path> <output_path>")
         sys.exit(1)
 
     command = sys.argv[1]
@@ -22,11 +22,11 @@ if __name__ == "__main__":
 
 
     if command == "generateSummaries":
-        generate_summaries(input_json_path, output_path, task_id, client)
+        generate_summaries(input_json_path, output_path, client)
     elif command == "generateStoryline":
-        generate_storyline(input_json_path, output_path, task_id, client)
+        generate_storyline(input_json_path, output_path, client)
     elif command == "generateVideo":
-        generate_video(input_json_path, output_path, task_id)
+        generate_video(input_json_path, output_path)
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)

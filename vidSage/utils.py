@@ -34,6 +34,15 @@ def clip_video(input_vid_path: str, output_vid_path: str, start_time: int, end_t
 
     os.system(command)
 
+def concat_videos(input_list_path: str, output_vid_path: str, silent=True) -> None:
+    """Concatenates multiple video files."""
+    if not shutil.which("ffmpeg"):
+        raise FileNotFoundError("ffmpeg not found on the system.")
+
+    command = f'ffmpeg -f concat -safe 0 -i {input_list_path} -c copy {output_vid_path} -y {"-nostats -loglevel 0" if silent else ""}'
+
+    os.system(command)
+
 def extract_frames_fixed(video_path, interval = 1):
     print(video_path)
     video = cv2.VideoCapture(video_path)

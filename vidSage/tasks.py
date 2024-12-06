@@ -2,16 +2,19 @@ import os
 from typing import List
 from scenedetect import detect, HashDetector
 
-from utils import read_json_file, write_json_file, preprocess_video, extract_frames_fixed, reduce_resolution, base64_encode_frames
+from utils import read_json_file, write_json_file, preprocess_video, extract_frames_fixed, reduce_resolution, base64_encode_frames, concat_videos, clip_video
 from videoObjects import VideoFile, Segment, VideoSummary, Story, Scene
 
 
 
 
 
-def generate_summaries(input_json_path: str, output_json_path: str, task_id: str, llm_client, LLM_IMG_LIMIT = 50) -> bool:
+def generate_summaries(input_json_path: str, output_json_path: str, llm_client, LLM_IMG_LIMIT = 50) -> bool:
     """Generates video summaries based on input JSON."""
-    files = read_json_file(input_json_path)
+    args = read_json_file(input_json_path)
+    task_id = args['taskId']
+    files = args['files']
+
 
     #create a temp directory
     task_folder = f'./tmp/{task_id}'
@@ -41,7 +44,7 @@ def generate_summaries(input_json_path: str, output_json_path: str, task_id: str
         file = file['file']
         input_vid_path = file['absolutePath']
         frames = extract_frames_fixed(input_vid_path)
-        reduced_frames = reduce_resolution(frames,1280, 720)
+        reduced_frames = reduce_resolution(frames, 1280, 720)
         encoded_frames = base64_encode_frames(reduced_frames)
         output_messages = []
         scene_sec = scenes[input_vid_path]
@@ -108,8 +111,15 @@ def generate_summaries(input_json_path: str, output_json_path: str, task_id: str
     return True
 
 
-def generate_storyline(input_json_path: str, output_json_path: str, task_id: str, llm_client) -> bool:
+def generate_storyline(input_json_path: str, output_json_path: str, llm_client) -> bool:
     """Generates a storyline based on video summaries and a user prompt."""
+    args = read_json_file(input_json_path)
+    task_id = args['taskId']
+    summaries = args['summaries']
+    prompt = args['prompt']
+    duration = args['duration']
+
+
     task_folder = f'./tmp/{task_id}'
     if not os.path.exists(task_folder):
         print(f"Task folder {task_folder} does not exist")
@@ -129,16 +139,34 @@ def generate_storyline(input_json_path: str, output_json_path: str, task_id: str
                 f"""
                 Based on the description of the videos, suggest me a story with selected parts of videos. You can change the order of the input.
 
+
                 {all_summaries}
                 """
             }
         ] }
     ]
-
+    if prompt != "":
+        messages[1]['content'].append(
+            {
+                "type": "text",
+                "text": f"""
+                Here is the prompt user want the story to be based on:
+                {prompt}
+                """
+            }
+        )
+    messages[1]['content'].append(
+        {
+            "type": "text",
+            "text": f"""
+            The duration of the whole video should be around {duration} seconds.
+            """
+        }
+    )
     for _ in range(1):
       try:
           response = llm_client.beta.chat.completions.parse(
-              model="gpt-4o", #TODO: fill in the model
+              model="gpt-4o",
               response_format=Story,
               messages=messages,
               max_tokens=2000
@@ -150,7 +178,6 @@ def generate_storyline(input_json_path: str, output_json_path: str, task_id: str
           print(e)
           print("Retrying...")
 
-    # Mock implementation
     storyline = []
 
     tmp_folder = f'./tmp/{task_id}/clips'
@@ -162,9 +189,10 @@ def generate_storyline(input_json_path: str, output_json_path: str, task_id: str
             continue
         # use ffmpeg to extract the scene
         filename = os.path.basename(input_vid_path)
+
         output_vid_path = f'{tmp_folder}/{filename}_{scene.start}_{scene.end}.mp4'
-        command = f'ffmpeg -i {input_vid_path} -ss {scene.start} -to {scene.end} -c copy {output_vid_path}'
-        os.system(command)
+
+        clip_video(input_vid_path, output_vid_path, scene.start, scene.end)
         storyline.append({
             "startTimeSec": scene.start,
             "endTimeSec": scene.end,
@@ -180,13 +208,16 @@ def generate_storyline(input_json_path: str, output_json_path: str, task_id: str
     return True
 
 
-def generate_video(input_json_path: str, output_video_path: str, task_id: str) -> bool:
+def generate_video(input_json_path: str, output_video_path: str) -> bool:
     """Generates a video file from segments."""
+    args = read_json_file(input_json_path)
+    task_id = args['taskId']
+    storyline = args['segments']
+
     task_folder = f'./tmp/{task_id}'
     if not os.path.exists(task_folder):
         print(f"Task folder {task_folder} does not exist")
         return False
-    storyline = read_json_file(input_json_path)
 
     video_list = [story['srcFile']['absolutePath'] for story in storyline]
     tmp_folder = f'./tmp/{task_id}'
@@ -194,7 +225,7 @@ def generate_video(input_json_path: str, output_video_path: str, task_id: str) -
         for video in video_list:
             f.write(f"file '{video}'\n")
 
-    os.system(f'ffmpeg -f concat -safe 0 -i {tmp_folder}/vid_list.txt -c copy {output_video_path} -y -nostats -loglevel 0')
+    concat_videos(f'{tmp_folder}/output.mp4')
 
     return True
 
