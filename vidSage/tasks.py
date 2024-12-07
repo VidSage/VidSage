@@ -23,9 +23,11 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
 
     #preprocess the video files and detect scenes
     for file in files:
-        file = file['file']
         input_vid_path = file['absolutePath']
-        output_vid_path = f'{task_folder}/{file["name"]}'
+        # TODO: filename change to file['name']
+        # filename = file['name']
+        filename = os.path.basename(input_vid_path)
+        output_vid_path = f'{task_folder}/{filename}'
         print(output_vid_path)
         preprocess_video(input_vid_path, output_vid_path)
 
@@ -41,8 +43,8 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
     #generate summaries
     summaries = []
     for file in files:
-        file = file['file']
         input_vid_path = file['absolutePath']
+        print(input_vid_path)
         frames = extract_frames_fixed(input_vid_path)
         reduced_frames = reduce_resolution(frames, 1280, 720)
         encoded_frames = base64_encode_frames(reduced_frames)
@@ -103,8 +105,40 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
             print(segment.startTimeSec, segment.endTimeSec)
             print(segment.description)
 
-        # TODO: generate the whole summary and aesthetic rating
-        summaries.append(VideoSummary(VideoFile(file['absolutePath'], file['name']), "whole summary", 4, segments))
+        whole = ''
+        for segment in segments:
+            whole += 'from ' + str(segment.startTimeSec) + ' to ' + str(segment.endTimeSec) + ' seconds: \n'
+            whole += segment.description + '\n'
+
+        messages = [
+            { "role": "user", "content": [
+                {
+                    "type": "text",
+                    "text":
+                    f"""
+                    Based on the description of the video from each part, give me a short summary of the video.
+
+                    {whole}
+                    """
+                }
+            ] }
+        ]
+        for _ in range(3):
+            try:
+                response = llm_client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=messages,
+                    max_tokens=4000
+                )
+                whole_summary = response.choices[0].message.content
+                break
+            except Exception as e:
+                print(e)
+                print("Retrying...")
+
+
+        # TODO: generate aesthetic rating
+        summaries.append(VideoSummary(VideoFile(file['absolutePath'], filename), whole_summary, 4, segments))
 
     write_json_file(output_json_path, [summary.to_dict() for summary in summaries])
 
@@ -123,8 +157,9 @@ def generate_storyline(input_json_path: str, output_json_path: str, llm_client) 
     task_folder = f'./tmp/{task_id}'
     if not os.path.exists(task_folder):
         print(f"Task folder {task_folder} does not exist")
-        return False
-    summaries = read_json_file(input_json_path)
+        # TODO: check task id
+        # return False
+        os.makedirs(task_folder, exist_ok=True)
     all_summaries = ""
     for summary in summaries:
         for segment in summary['segments']:
@@ -159,7 +194,7 @@ def generate_storyline(input_json_path: str, output_json_path: str, llm_client) 
         {
             "type": "text",
             "text": f"""
-            The duration of the whole video should be around {duration} seconds.
+            The duration of the whole video should be around {duration} minutes.
             """
         }
     )
