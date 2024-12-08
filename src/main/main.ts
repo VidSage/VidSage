@@ -14,6 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
+import * as fs from 'fs';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import { generateSummaries, generateStoryline, generateVideo } from './vidSage';
@@ -91,6 +92,26 @@ ipcMain.handle('select-videos', async () => {
   return [];
 });
 
+ipcMain.handle('save-video', async (_, originalFilePath: string) => {
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow!, {
+    title: 'Save Video',
+    defaultPath: 'video.mp4',
+    filters: [{ name: 'Video Files', extensions: ['mp4'] }],
+  });
+
+  if (canceled || !filePath) {
+    return { success: false, filePath: null };
+  }
+
+  try {
+    fs.copyFileSync(originalFilePath, filePath); // Copy the video to the chosen destination
+    return { success: true, filePath };
+  } catch (error) {
+    console.error('Failed to save video:', error);
+    return { success: false, error };
+  }
+});
+
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
@@ -138,6 +159,8 @@ const createWindow = async () => {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
+      contextIsolation: true, // Keeps context isolation for security
+      webSecurity: false, // Disable web security to allow local file loading
     },
   });
 
@@ -182,6 +205,12 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('will-quit', () => {
+  const tempDataPath: string = path.join(app.getPath('userData'), 'vidSage');
+  // remove temp data directory
+  fs.rmdirSync(tempDataPath, { recursive: true });
 });
 
 app

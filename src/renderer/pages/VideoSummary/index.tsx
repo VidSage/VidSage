@@ -1,7 +1,16 @@
-import React from 'react';
-import { Typography, List, Button, Space, Collapse, Input } from 'antd';
+/* eslint-disable jsx-a11y/media-has-caption */
+import {
+  Typography,
+  List,
+  Button,
+  Space,
+  Collapse,
+  Input,
+  message,
+} from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue, useAtom } from 'jotai';
+import { useEffect, useRef, useState } from 'react';
 import storylineAtom from '../../states/storyline';
 import previewAtom from '../../states/preview';
 import summaryAtom from '../../states/summary';
@@ -17,6 +26,9 @@ function VideoSummary() {
   const storyline = useAtomValue(storylineAtom);
   const [preview, setPreviewAtom] = useAtom(previewAtom);
   const summaries = useAtomValue(summaryAtom);
+  const videoClipRef = useRef<HTMLVideoElement>(null);
+
+  const [selectedClip, setSelectedClip] = useState<number | null>(null);
 
   const handleBack = () => {
     navigate('/generate');
@@ -29,7 +41,44 @@ function VideoSummary() {
     setPreviewAtom(newPreview);
   };
 
-  const handleSave = () => {};
+  const handleSave = async () => {
+    try {
+      if (!preview) {
+        message.error('No video preview available to save.');
+        return;
+      }
+      const result = await window.electron.saveVideo(preview);
+      if (result.success) {
+        message.success(`Video saved successfully to ${result.filePath}`);
+      } else {
+        message.error('Failed to save the video.');
+      }
+    } catch (error) {
+      message.error('Failed to save the video.');
+    }
+  };
+
+  useEffect(() => {
+    const videoClip = videoClipRef.current;
+    if (!videoClip) {
+      return;
+    }
+    const segment = storyline.at(selectedClip ?? 0)!;
+    const handleLoadedMetadata = () => {
+      videoClip.currentTime = segment.startTimeSec;
+    };
+
+    // Monitor playback and stop/reset when the end time is reached
+    const handleTimeUpdate = () => {
+      if (videoClip.currentTime >= segment.endTimeSec) {
+        videoClip.currentTime = segment.startTimeSec; // Optionally reset to the start time
+      }
+    };
+
+    // Attach event listeners
+    videoClip.addEventListener('loadedmetadata', handleLoadedMetadata);
+    videoClip.addEventListener('timeupdate', handleTimeUpdate);
+  }, [selectedClip, storyline]);
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
@@ -74,9 +123,13 @@ function VideoSummary() {
             bordered
             style={{ marginTop: '10px' }}
             dataSource={storyline}
-            renderItem={(segment) => (
+            renderItem={(segment, index) => (
               <List.Item>
-                <Text>
+                <Text
+                  onClick={() => {
+                    setSelectedClip(selectedClip === index ? null : index);
+                  }}
+                >
                   <strong>[{segment.srcFile?.name || 'Summary'}]</strong>{' '}
                   {`${getTimeStamp(segment.startTimeSec)} - ${getTimeStamp(segment.endTimeSec)}`}{' '}
                   {segment.description}
@@ -86,6 +139,28 @@ function VideoSummary() {
           />
         </div>
       </div>
+
+      {selectedClip !== null ? (
+        <video
+          ref={videoClipRef}
+          controls
+          autoPlay
+          style={{
+            width: '100%',
+            maxWidth: '800px',
+            height: '100%',
+            backgroundColor: '#000',
+          }}
+        >
+          <source
+            src={`file://${storyline.at(selectedClip ?? 0)?.srcFile?.absolutePath}`}
+            type="video/mp4"
+          />
+          Your browser does not support the video tag.
+        </video>
+      ) : (
+        <Text>Click on a section on the right to preview</Text>
+      )}
 
       {/* Section: Adjust Generated Storyline */}
       <div
@@ -113,7 +188,7 @@ function VideoSummary() {
             marginLeft: 'auto', // Center-align button
             marginRight: 'auto',
           }}
-          onClick={() => console.log('Storyline updated')}
+          onClick={() => console.log('TODO: Update Storyline')}
         >
           Update Storyline
         </Button>
@@ -127,6 +202,18 @@ function VideoSummary() {
         }}
       >
         <Title level={4}>Video Preview</Title>
+        <Button
+          type="primary"
+          style={{
+            marginTop: '10px',
+            display: 'block', // Block element for full-width alignment
+            marginLeft: 'auto', // Center-align button
+            marginRight: 'auto',
+          }}
+          onClick={() => generatePreview()}
+        >
+          Generate Full Video
+        </Button>
         <div
           style={{
             marginTop: '10px',
@@ -138,7 +225,23 @@ function VideoSummary() {
             alignItems: 'center',
           }}
         >
-          <Text>Video Preview Area</Text>
+          {preview ? (
+            <video
+              controls
+              autoPlay
+              style={{
+                width: '100%',
+                maxWidth: '800px',
+                height: '100%',
+                backgroundColor: '#000',
+              }}
+            >
+              <source src={`file://${preview}`} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <Text>Video Preview Area</Text>
+          )}
         </div>
       </div>
 
@@ -149,7 +252,7 @@ function VideoSummary() {
             Back
           </Button>
           <Button type="primary" onClick={handleSave}>
-            Save
+            Save As
           </Button>
         </Space>
       </div>

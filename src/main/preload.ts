@@ -7,7 +7,8 @@ export type Channels =
   | 'gen-summary'
   | 'gen-storyline'
   | 'gen-video'
-  | 'select-videos';
+  | 'select-videos'
+  | 'save-video';
 
 const electronHandler = {
   ipcRenderer: {
@@ -29,6 +30,9 @@ const electronHandler = {
     invoke(channel: Channels, ...args: unknown[]) {
       return ipcRenderer.invoke(channel, ...args); // Add support for ipcRenderer.invoke
     },
+  },
+  saveVideo: (originalFilePath: string) => {
+    return ipcRenderer.invoke('save-video', originalFilePath);
   },
 };
 

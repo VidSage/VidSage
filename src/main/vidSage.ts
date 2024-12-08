@@ -15,7 +15,9 @@ const vidSage = isDebug
   ? path.join(webpackPaths.appPath, 'vidSage')
   : path.join(__dirname, '../../vidSage');
 
-const vidSageBinary = path.join(vidSage, 'main.exe');
+const mainPath = process.platform === 'win32' ? 'main.exe' : 'main';
+
+const vidSageBinary = path.join(vidSage, mainPath);
 
 // temp data directory
 const userDataPath: string = app.getPath('userData');

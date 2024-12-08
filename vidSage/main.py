@@ -1,6 +1,6 @@
 import sys
 import json
-import os
+import shutil
 
 def handle_generate_summaries(input_json_path: str, output_json_path: str):
     data = [
@@ -134,10 +134,10 @@ def handle_generate_summaries(input_json_path: str, output_json_path: str):
 def handle_generate_storyline(input_json_path: str, output_json_path: str):
     data = [
         {
-            "startTimeSec": 0,
-            "endTimeSec": 20,
+            "startTimeSec": 10,
+            "endTimeSec": 15,
             "description": "展示户外秋天的场景",
-            "srcFile": {"absolutePath": "/path/to/clip1.mp4", "name": "Clip 1"},
+            "srcFile": {"absolutePath": "/Users/wyq/Downloads/earth.mp4", "name": "Earth"},
         },
         {
             "startTimeSec": 20,
@@ -168,7 +168,7 @@ def handle_generate_storyline(input_json_path: str, output_json_path: str):
         json.dump(data, f, ensure_ascii=False, indent=4)
 
 def handle_generate_video(input_json_path: str, output_video_path: str):
-    os.rename("D:\Downloads\cup.mp4", output_video_path)
+    shutil.copyfile("/Users/wyq/Downloads/earth.mp4", output_video_path)
 
 def main():
     # Check if the required positional argument is provided
