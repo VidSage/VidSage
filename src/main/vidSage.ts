@@ -106,4 +106,8 @@ async function generateVideo(args: {
   return outputVideoAbsPath;
 }
 
-export { generateSummaries, generateStoryline, generateVideo };
+function cleanup(): void {
+  const result = execFileSync(vidSageBinary, ['cleanUp']);
+}
+
+export { generateSummaries, generateStoryline, generateVideo, cleanup };

@@ -167,13 +167,17 @@ def handle_generate_storyline(input_json_path: str, output_json_path: str):
     with open(output_json_path, "w", encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
+def handle_clean_up():
+    print("Cleaning up...")
+    return
+
 def handle_generate_video(input_json_path: str, output_video_path: str):
     shutil.copyfile("/Users/wyq/Downloads/earth.mp4", output_video_path)
 
 def main():
     # Check if the required positional argument is provided
-    if len(sys.argv) != 4:
-        print("Usage: python script.py <argument>")
+    if len(sys.argv) <= 1:
+        print("Usage: python main.py <operation> <input_json_path> <output_json_path>")
         sys.exit(1)
     
     op = sys.argv[1]
@@ -184,6 +188,8 @@ def main():
         handle_generate_storyline(sys.argv[2], sys.argv[3])
     elif op == "generateVideo":
         handle_generate_video(sys.argv[2], sys.argv[3])
+    elif op == "cleanUp":
+        handle_clean_up()
     else:
         print("Invalid operation")
         sys.exit(1)

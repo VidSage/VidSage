@@ -17,7 +17,12 @@ import { format } from 'date-fns';
 import * as fs from 'fs';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-import { generateSummaries, generateStoryline, generateVideo } from './vidSage';
+import {
+  generateSummaries,
+  generateStoryline,
+  generateVideo,
+  cleanup,
+} from './vidSage';
 
 class AppUpdater {
   constructor() {
@@ -210,7 +215,8 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => {
   const tempDataPath: string = path.join(app.getPath('userData'), 'vidSage');
   // remove temp data directory
-  fs.rmdirSync(tempDataPath, { recursive: true });
+  fs.rmSync(tempDataPath, { recursive: true });
+  cleanup();
 });
 
 app
