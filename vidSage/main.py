@@ -9,10 +9,17 @@ import uuid
 
 if __name__ == "__main__":
     dotenv.load_dotenv()
-    print(os.getenv("OPENAI_API_KEY"))
+    # print(os.getenv("OPENAI_API_KEY"))
 
-    if len(sys.argv) != 4:
-        print("Usage: python main.py <command> <input_json_path> <output_path>")
+    if os.getenv("OPENAI_API_KEY") is None:
+        print("OPENAI_API_KEY environment variable not set.")
+        sys.exit(1)
+
+    if len(sys.argv) == 1 and sys.argv[1] == 'cleanUp':
+        remove_temp_files()
+        sys.exit(0)
+    elif len(sys.argv) != 4:
+        print("Usage: python main.py <command> <input_json_path> <output_path> | python main.py cleanUp")
         sys.exit(1)
 
     command = sys.argv[1]
@@ -27,8 +34,6 @@ if __name__ == "__main__":
         generate_storyline(input_json_path, output_path, client)
     elif command == "generateVideo":
         generate_video(input_json_path, output_path)
-    elif command == "cleanUp":
-        remove_temp_files()
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)
