@@ -1,6 +1,6 @@
 /* eslint-disable no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { execFileSync, spawnSync } from 'child_process';
+import { execFile, spawnSync } from 'child_process';
 import path from 'path';
 import { app } from 'electron';
 import * as fs from 'fs';
@@ -15,9 +15,10 @@ const vidSage = isDebug
   ? path.join(webpackPaths.appPath, 'vidSage')
   : path.join(__dirname, '../../vidSage');
 
-const vidSageBinary = path.join(vidSage, 'main.exe');
+const mainPath = process.platform === 'win32' ? 'main.exe' : 'main';
 
-// temp data directory
+const vidSageBinary = path.join(vidSage, mainPath);
+
 const userDataPath: string = app.getPath('userData');
 const tempDataPath: string = path.join(userDataPath, 'vidSage');
 
@@ -31,8 +32,6 @@ ensureDirectoryExists(tempDataPath);
 
 /**
  * generate video summaries given a list of video files and a task ID
- * saves args object in inputJSONAbsPath file and invokes the Python script
- * reads the result from outputJSONAbsPath file and returns it
  * @param args - taskId: string, files: VideoFile[]
  * @returns a list of VideoSummary objects
  */
@@ -44,11 +43,21 @@ async function generateSummaries(args: {
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputJSONAbsPath = path.join(tempDataPath, args.taskId, 'output.json');
   await writeJSONFile(inputJSONAbsPath, args);
-  // const result = execFileSync(vidSageBinary, [
-  //   'generateSummaries',
-  //   inputJSONAbsPath,
-  //   outputJSONAbsPath,
-  // ]);
+
+
+//   await new Promise<void>((resolve, reject) => {
+//     execFile(
+//       vidSageBinary,
+//       ['generateSummaries', inputJSONAbsPath, outputJSONAbsPath],
+//       (error, stdout, stderr) => {
+//         if (error) {
+//           return reject(error);
+//         }
+//         return resolve();
+//       },
+//     );
+//   });
+
   const result = spawnSync(
     'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
     [
@@ -67,10 +76,8 @@ async function generateSummaries(args: {
 
 /**
  * generate a storyline based on provided video summaries and a user prompt
- * saves args object in inputJSONAbsPath file and invokes the Python script
- * reads the result from outputJSONAbsPath file and returns it
  * @param args - taskId: string, summaries: VideoSummary[], prompt: string, duration: number
- * @returns a list of Segment objects representing the storyline
+ * @returns a list of Segment objects
  */
 async function generateStoryline(args: {
   taskId: string;
@@ -82,11 +89,20 @@ async function generateStoryline(args: {
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputJSONAbsPath = path.join(tempDataPath, args.taskId, 'output.json');
   await writeJSONFile(inputJSONAbsPath, args);
-  // const result = execFileSync(vidSageBinary, [
-  //   'generateStoryline',
-  //   inputJSONAbsPath,
-  //   outputJSONAbsPath,
-  // ]);
+
+//   await new Promise<void>((resolve, reject) => {
+//     execFile(
+//       vidSageBinary,
+//       ['generateStoryline', inputJSONAbsPath, outputJSONAbsPath],
+//       (error, stdout, stderr) => {
+//         if (error) {
+//           return reject(error);
+//         }
+//         return resolve();
+//       },
+//     );
+//   });
+
   const result = spawnSync(
     'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
     [
@@ -105,10 +121,6 @@ async function generateStoryline(args: {
 
 /**
  * generate a final video using a list of segments
- * saves args object in inputJSONAbsPath file and invokes the Python script
- * returns the absolute path to the generated video file
- * Note: the python script should generate the video file in the designated output path
- * and should not produce a JSON file
  * @param args - taskId: string, segments: Segment[]
  * @returns the absolute file path to the generated video
  */
@@ -120,11 +132,20 @@ async function generateVideo(args: {
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputVideoAbsPath = path.join(tempDataPath, args.taskId, 'output.mp4');
   await writeJSONFile(inputJSONAbsPath, args);
-  // const result = execFileSync(vidSageBinary, [
-  //   'generateVideo',
-  //   inputJSONAbsPath,
-  //   outputVideoAbsPath,
-  // ]);
+
+//   await new Promise<void>((resolve, reject) => {
+//     execFile(
+//       vidSageBinary,
+//       ['generateVideo', inputJSONAbsPath, outputVideoAbsPath],
+//       (error, stdout, stderr) => {
+//         if (error) {
+//           return reject(error);
+//         }
+//         return resolve();
+//       },
+//     );
+//   });
+
   const result = spawnSync(
     'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
     ['vidSage/main.py', 'generateVideo', inputJSONAbsPath, outputVideoAbsPath],
@@ -135,4 +156,18 @@ async function generateVideo(args: {
   return outputVideoAbsPath;
 }
 
-export { generateSummaries, generateStoryline, generateVideo };
+/**
+ * cleanup temporary resources
+ */
+async function cleanup(): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    execFile(vidSageBinary, ['cleanUp'], (error, stdout, stderr) => {
+      if (error) {
+        return reject(error);
+      }
+      return resolve();
+    });
+  });
+}
+
+export { generateSummaries, generateStoryline, generateVideo, cleanup };

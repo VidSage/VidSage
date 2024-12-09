@@ -4,6 +4,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
 import summaryAtom from '../../states/summary';
+import { getFileNameWithoutExtension } from '../../common/util';
 import type { VideoFile } from '../../../main/types';
 
 function VideoUpload() {
@@ -12,17 +13,24 @@ function VideoUpload() {
 
   const setSummaryAtom = useSetAtom(summaryAtom);
 
+  const [loading, setLoading] = useState(false);
+
   const generateSummaries = async (files: VideoFile[]) => {
+    setLoading(true);
     const summaries = await window.electron.ipcRenderer.invoke(
       'gen-summary',
       files,
     );
+    setLoading(false);
     setSummaryAtom(summaries);
   };
 
   const handleViewSummaries = () => {
     generateSummaries(
-      videos.map((video) => ({ name: video, absolutePath: video })),
+      videos.map((video) => ({
+        name: getFileNameWithoutExtension(video),
+        absolutePath: video,
+      })),
     )
       .then(() => navigate('/storyline'))
       .catch((err) => {
@@ -75,23 +83,26 @@ function VideoUpload() {
         <List
           bordered
           dataSource={videos}
-          renderItem={(item, index) => (
-            <List.Item
-              actions={[
-                <Typography.Link
-                  key="remove"
-                  onClick={() => handleRemoveVideo(index)}
-                >
-                  remove
-                </Typography.Link>,
-              ]}
-            >
-              <List.Item.Meta
-                avatar={<Avatar>{item[0]}</Avatar>}
-                title={item}
-              />
-            </List.Item>
-          )}
+          renderItem={(item, index) => {
+            const title = getFileNameWithoutExtension(item);
+            return (
+              <List.Item
+                actions={[
+                  <Typography.Link
+                    key="remove"
+                    onClick={() => handleRemoveVideo(index)}
+                  >
+                    remove
+                  </Typography.Link>,
+                ]}
+              >
+                <List.Item.Meta
+                  avatar={<Avatar>{title[0]}</Avatar>}
+                  title={item}
+                />
+              </List.Item>
+            );
+          }}
           style={{ margin: '20px auto', maxWidth: '600px' }}
         />
       ) : (
@@ -105,7 +116,11 @@ function VideoUpload() {
           <Button type="default" danger onClick={handleClearList}>
             Clear List
           </Button>
-          <Button type="primary" onClick={handleViewSummaries}>
+          <Button
+            type="primary"
+            onClick={handleViewSummaries}
+            loading={loading}
+          >
             View Summaries
           </Button>
         </Space>
