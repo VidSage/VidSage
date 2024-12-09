@@ -4,6 +4,7 @@ import { UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
 import summaryAtom from '../../states/summary';
+import { getFileNameWithoutExtension } from '../../common/util';
 import type { VideoFile } from '../../../main/types';
 
 function VideoUpload() {
@@ -26,7 +27,10 @@ function VideoUpload() {
 
   const handleViewSummaries = () => {
     generateSummaries(
-      videos.map((video) => ({ name: video, absolutePath: video })),
+      videos.map((video) => ({
+        name: getFileNameWithoutExtension(video),
+        absolutePath: video,
+      })),
     )
       .then(() => navigate('/storyline'))
       .catch((err) => {
@@ -79,23 +83,26 @@ function VideoUpload() {
         <List
           bordered
           dataSource={videos}
-          renderItem={(item, index) => (
-            <List.Item
-              actions={[
-                <Typography.Link
-                  key="remove"
-                  onClick={() => handleRemoveVideo(index)}
-                >
-                  remove
-                </Typography.Link>,
-              ]}
-            >
-              <List.Item.Meta
-                avatar={<Avatar>{item[0]}</Avatar>}
-                title={item}
-              />
-            </List.Item>
-          )}
+          renderItem={(item, index) => {
+            const title = getFileNameWithoutExtension(item);
+            return (
+              <List.Item
+                actions={[
+                  <Typography.Link
+                    key="remove"
+                    onClick={() => handleRemoveVideo(index)}
+                  >
+                    remove
+                  </Typography.Link>,
+                ]}
+              >
+                <List.Item.Meta
+                  avatar={<Avatar>{title[0]}</Avatar>}
+                  title={item}
+                />
+              </List.Item>
+            );
+          }}
           style={{ margin: '20px auto', maxWidth: '600px' }}
         />
       ) : (
