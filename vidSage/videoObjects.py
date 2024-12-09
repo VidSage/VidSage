@@ -53,3 +53,7 @@ class Story(BaseModel):
     title: str
     whole_story: str
     scenes: list[Scene]
+
+class Description(BaseModel):
+    description: str
+    aestheticRating: int

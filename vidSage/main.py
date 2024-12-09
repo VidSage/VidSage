@@ -1,5 +1,5 @@
 import sys
-from tasks import generate_summaries, generate_storyline, generate_video
+from tasks import generate_summaries, generate_storyline, generate_video, remove_temp_files
 import dotenv
 import os
 from openai import OpenAI
@@ -26,6 +26,8 @@ if __name__ == "__main__":
         generate_storyline(input_json_path, output_path, client)
     elif command == "generateVideo":
         generate_video(input_json_path, output_path)
+    elif command == "cleanUp":
+        remove_temp_files()
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)
