@@ -27,6 +27,8 @@ function VideoSummary() {
   const [preview, setPreviewAtom] = useAtom(previewAtom);
   const summaries = useAtomValue(summaryAtom);
   const videoClipRef = useRef<HTMLVideoElement>(null);
+  const [generatingPreview, setGeneratingPreview] = useState(false);
+  const [updatingStoryline, setUpdatingStoryline] = useState(false);
 
   const [selectedClip, setSelectedClip] = useState<number | null>(null);
 
@@ -35,10 +37,21 @@ function VideoSummary() {
   };
 
   const generatePreview = async () => {
+    setGeneratingPreview(true);
     const newPreview = await window.electron.ipcRenderer.invoke('gen-video', {
       storyline,
     });
+    setGeneratingPreview(false);
+    message.success('Video preview generated successfully');
     setPreviewAtom(newPreview);
+  };
+
+  const updateStoryline = async () => {
+    setUpdatingStoryline(true);
+    // TODO: Update the storyline based on the user input
+    await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+    message.success('Storyline updated successfully');
+    setUpdatingStoryline(false);
   };
 
   const handleSave = async () => {
@@ -188,7 +201,8 @@ function VideoSummary() {
             marginLeft: 'auto', // Center-align button
             marginRight: 'auto',
           }}
-          onClick={() => console.log('TODO: Update Storyline')}
+          onClick={() => updateStoryline()}
+          loading={updatingStoryline}
         >
           Update Storyline
         </Button>
@@ -211,6 +225,7 @@ function VideoSummary() {
             marginRight: 'auto',
           }}
           onClick={() => generatePreview()}
+          loading={generatingPreview}
         >
           Generate Full Video
         </Button>

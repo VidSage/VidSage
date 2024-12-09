@@ -11,6 +11,7 @@ const { TextArea } = Input;
 function GenerateStoryline() {
   const [prompt, setPrompt] = useState('');
   const [duration, setDuration] = useState(3);
+  const [loading, setLoading] = useState(false);
 
   const setStorylineAtom = useSetAtom(storylineAtom);
   const summary = useAtomValue(summaryAtom);
@@ -22,6 +23,7 @@ function GenerateStoryline() {
   };
 
   const generateStoryline = async () => {
+    setLoading(true);
     const storyline = await window.electron.ipcRenderer.invoke(
       'gen-storyline',
       {
@@ -30,6 +32,7 @@ function GenerateStoryline() {
         summaries: summary,
       },
     );
+    setLoading(false);
     setStorylineAtom(storyline);
   };
 
@@ -88,7 +91,7 @@ function GenerateStoryline() {
           <Button type="default" danger onClick={handleBack}>
             Back
           </Button>
-          <Button type="primary" onClick={handleGenerate}>
+          <Button type="primary" onClick={handleGenerate} loading={loading}>
             Generate Storyline
           </Button>
         </Space>

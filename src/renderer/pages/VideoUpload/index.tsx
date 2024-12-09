@@ -12,11 +12,15 @@ function VideoUpload() {
 
   const setSummaryAtom = useSetAtom(summaryAtom);
 
+  const [loading, setLoading] = useState(false);
+
   const generateSummaries = async (files: VideoFile[]) => {
+    setLoading(true);
     const summaries = await window.electron.ipcRenderer.invoke(
       'gen-summary',
       files,
     );
+    setLoading(false);
     setSummaryAtom(summaries);
   };
 
@@ -105,7 +109,11 @@ function VideoUpload() {
           <Button type="default" danger onClick={handleClearList}>
             Clear List
           </Button>
-          <Button type="primary" onClick={handleViewSummaries}>
+          <Button
+            type="primary"
+            onClick={handleViewSummaries}
+            loading={loading}
+          >
             View Summaries
           </Button>
         </Space>
