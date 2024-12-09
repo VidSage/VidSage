@@ -1,6 +1,7 @@
 {
   "name": "vidsage",
   "description": "AI-Powered Video Editing",
+  "productName": "VidSage",
   "keywords": [
     "electron",
     "react",
@@ -162,8 +163,8 @@
     "webpack-merge": "^5.9.0"
   },
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.erb.ElectronReact",
+    "productName": "VidSage",
+    "appId": "com.vidsage.vidsage",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
