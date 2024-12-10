@@ -4,6 +4,8 @@ import shutil
 import cv2
 import base64
 import os
+import subprocess
+
 
 
 
@@ -21,27 +23,60 @@ def preprocess_video(input_vid_path: str, output_vid_path: str, fps=2, height=72
     if not shutil.which("ffmpeg"):
         raise FileNotFoundError("ffmpeg not found on the system.")
 
-    command = f'ffmpeg -i {input_vid_path} -vf scale=-2:{height} -r {fps} -preset ultrafast -an {output_vid_path} -y {"-nostats -loglevel 0" if silent else ""}'
+    command = [
+        "ffmpeg",
+        "-i", input_vid_path,
+        "-vf", f"scale=-2:{height}",
+        "-r", str(fps),
+        "-preset", "ultrafast",
+        "-an",
+        output_vid_path,
+        "-y"
+    ]
+    if silent:
+        command.extend(["-nostats", "-loglevel", "0"])
 
-    os.system(command)
+    subprocess.run(command)
 
 def clip_video(input_vid_path: str, output_vid_path: str, start_time: int, end_time: int, silent=True) -> None:
     """Clips a video file."""
     if not shutil.which("ffmpeg"):
         raise FileNotFoundError("ffmpeg not found on the system.")
 
-    command = f'ffmpeg -i {input_vid_path} -ss {start_time} -to {end_time} -c copy {output_vid_path} -y {"-nostats -loglevel 0" if silent else ""}'
+    command = [
+        "ffmpeg",
+        "-i", input_vid_path,
+        "-ss", str(start_time),
+        "-to", str(end_time),
+        "-c", "copy",
+        output_vid_path,
+        "-y"
+    ]
+    if silent:
+        command.extend(["-nostats", "-loglevel", "0"])
 
-    os.system(command)
+    subprocess.run(command)
 
 def concat_videos(input_list_path: str, output_vid_path: str, silent=True) -> None:
     """Concatenates multiple video files."""
     if not shutil.which("ffmpeg"):
         raise FileNotFoundError("ffmpeg not found on the system.")
 
-    command = f'ffmpeg -f concat -safe 0 -i {input_list_path} -c copy {output_vid_path} -y {"-nostats -loglevel 0" if silent else ""}'
+    command = [
+        "ffmpeg",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", input_list_path,
+        "-c", "copy",
+        output_vid_path,
+        "-y"
+    ]
 
-    os.system(command)
+    if silent:
+        command.extend(["-nostats", "-loglevel", "0"])
+
+    subprocess.run(command)
+
 
 def extract_frames_fixed(video_path, interval = 1):
     print(video_path)
