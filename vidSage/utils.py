@@ -42,6 +42,7 @@ def clip_video(input_vid_path: str, output_vid_path: str, start_time: int, end_t
     """Clips a video file."""
     if not shutil.which("ffmpeg"):
         raise FileNotFoundError("ffmpeg not found on the system.")
+
     command = [
         "ffmpeg",
         "-i", input_vid_path,
@@ -55,7 +56,6 @@ def clip_video(input_vid_path: str, output_vid_path: str, start_time: int, end_t
         command.extend(["-nostats", "-loglevel", "0"])
 
     subprocess.run(command)
-
 
 def concat_videos(input_list_path: str, output_vid_path: str, silent=True) -> None:
     """Concatenates multiple video files."""
@@ -76,6 +76,7 @@ def concat_videos(input_list_path: str, output_vid_path: str, silent=True) -> No
         command.extend(["-nostats", "-loglevel", "0"])
 
     subprocess.run(command)
+
 
 def extract_frames_fixed(video_path, interval = 1):
     print(video_path)
