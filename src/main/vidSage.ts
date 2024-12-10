@@ -1,6 +1,6 @@
 /* eslint-disable no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { execFile } from 'child_process';
+import { execFile, spawnSync } from 'child_process';
 import path from 'path';
 import { app } from 'electron';
 import * as fs from 'fs';
@@ -57,6 +57,18 @@ async function generateSummaries(args: {
     );
   });
 
+  // const result = spawnSync(
+  //   'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
+  //   [
+  //     'vidSage/main.py',
+  //     'generateSummaries',
+  //     inputJSONAbsPath,
+  //     outputJSONAbsPath,
+  //   ],
+  //   { encoding: 'utf-8' },
+  // );
+  // console.log(result.stdout);
+  // console.log(result.stderr);
   const data = await readJSONFile(outputJSONAbsPath);
   return data as VideoSummary[];
 }
@@ -90,6 +102,18 @@ async function generateStoryline(args: {
     );
   });
 
+  // const result = spawnSync(
+  //   'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
+  //   [
+  //     'vidSage/main.py',
+  //     'generateStoryline',
+  //     inputJSONAbsPath,
+  //     outputJSONAbsPath,
+  //   ],
+  //   { encoding: 'utf-8' },
+  // );
+  // console.log(result.stdout);
+  // console.log(result.stderr);
   const data = await readJSONFile(outputJSONAbsPath);
   return data as Segment[];
 }
@@ -121,6 +145,13 @@ async function generateVideo(args: {
     );
   });
 
+  // const result = spawnSync(
+  //   'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
+  //   ['vidSage/main.py', 'generateVideo', inputJSONAbsPath, outputVideoAbsPath],
+  //   { encoding: 'utf-8' },
+  // );
+  // console.log(result.stdout);
+  // console.log(result.stderr);
   return outputVideoAbsPath;
 }
 

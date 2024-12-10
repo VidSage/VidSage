@@ -33,3 +33,14 @@ vidSage/dist
 vidSage/main.spec
 
 release/app/vidSage
+
+.env
+
+tmp/
+
+# ignore pycache
+**/__pycache__/
+
+build
+dist
+main.spec
