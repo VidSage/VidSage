@@ -18,7 +18,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 1 and sys.argv[1] == 'cleanUp':
         remove_temp_files()
         sys.exit(0)
-    elif len(sys.argv) != 4:
+    elif len(sys.argv) != 5:
         print("Usage: python main.py <command> <input_json_path> <output_path> <api_key> | python main.py cleanUp")
         sys.exit(1)
 
