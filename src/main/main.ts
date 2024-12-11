@@ -15,6 +15,7 @@ import log from 'electron-log';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import * as fs from 'fs';
+import OpenAI from 'openai';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import {
@@ -48,6 +49,35 @@ function generateTimestampedUUID(): string {
 
 let mainWindow: BrowserWindow | null = null;
 
+let storedApiKey: string | null = null;
+
+async function validateOpenAiKey(apiKey: string): Promise<boolean> {
+  try {
+    // Example: set the API key and try a minimal call
+    const openai = new OpenAI({ apiKey });
+
+    // Minimal call to check validity, e.g. list models
+    await openai.models.list();
+    return true;
+  } catch (error: any) {
+    console.error('API key validation failed:', error);
+    return false;
+  }
+}
+
+ipcMain.handle('validate-api-key', async (event, apiKey: string) => {
+  const isValid = await validateOpenAiKey(apiKey);
+  if (isValid) {
+    return { valid: true };
+  }
+  return { valid: false, error: 'Invalid API key or failed to validate' };
+});
+
+ipcMain.handle('set-api-key', (event, apiKey: string) => {
+  storedApiKey = apiKey;
+  return { success: true };
+});
+
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
@@ -55,28 +85,37 @@ ipcMain.on('ipc-example', async (event, arg) => {
 });
 
 ipcMain.handle('gen-summary', async (event, args) => {
-  const summaries = await generateSummaries({
-    taskId: generateTimestampedUUID(),
-    files: args,
-  });
+  const summaries = await generateSummaries(
+    {
+      taskId: generateTimestampedUUID(),
+      files: args,
+    },
+    storedApiKey!,
+  );
   return summaries;
 });
 
 ipcMain.handle('gen-storyline', async (event, args) => {
-  const segments = await generateStoryline({
-    taskId: generateTimestampedUUID(),
-    summaries: args.summaries,
-    prompt: args.prompt,
-    duration: args.duration,
-  });
+  const segments = await generateStoryline(
+    {
+      taskId: generateTimestampedUUID(),
+      summaries: args.summaries,
+      prompt: args.prompt,
+      duration: args.duration,
+    },
+    storedApiKey!,
+  );
   return segments;
 });
 
 ipcMain.handle('gen-video', async (event, args) => {
-  const preview = await generateVideo({
-    taskId: generateTimestampedUUID(),
-    segments: args.storyline,
-  });
+  const preview = await generateVideo(
+    {
+      taskId: generateTimestampedUUID(),
+      segments: args.storyline,
+    },
+    storedApiKey!,
+  );
   return preview;
 });
 
