@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Button, List, Typography, Space, Avatar, message } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
+import { Button, List, Typography, Space, Avatar, message, Input } from 'antd';
+import { UploadOutlined, CheckCircleOutlined} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
 import summaryAtom from '../../states/summary';
@@ -13,7 +13,11 @@ function VideoUpload() {
 
   const setSummaryAtom = useSetAtom(summaryAtom);
 
+  const [apiKey, setApiKey] = useState('');
+
   const [loading, setLoading] = useState(false);
+
+  const [isApiKeyApplied, setIsApiKeyApplied] = useState(false);
 
   const generateSummaries = async (files: VideoFile[]) => {
     setLoading(true);
@@ -64,6 +68,37 @@ function VideoUpload() {
     message.info('Video list cleared.');
   };
 
+  const handleSaveApiKey = async () => {
+    try {
+      // First validate the API key
+      const { valid, error } = await window.electron.ipcRenderer.invoke(
+        'validate-api-key',
+        apiKey,
+      );
+      if (!valid) {
+        message.error(error || 'Invalid API key.');
+        return;
+      }
+
+      // If valid, then set the API key
+      const { success } = await window.electron.ipcRenderer.invoke(
+        'set-api-key',
+        apiKey,
+      );
+      if (success) {
+        message.success('API key applied successfully.');
+        setIsApiKeyApplied(true);
+      } else {
+        message.error('Failed to apply API key.');
+      }
+    } catch (error) {
+      message.error('An error occurred while applying the API key.');
+      console.error(error);
+    }
+  };
+
+  const isViewSummariesDisabled = !apiKey.trim() || videos.length === 0;
+
   return (
     <div style={{ textAlign: 'center', padding: '20px' }}>
       <Typography.Title level={2}>Upload Videos</Typography.Title>
@@ -111,6 +146,32 @@ function VideoUpload() {
           add some.
         </Typography.Text>
       )}
+      <div
+        style={{
+          margin: '20px 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Input.Password
+          placeholder="Enter OpenAI API Key"
+          value={apiKey}
+          onChange={(e) => {
+            setApiKey(e.target.value);
+            setIsApiKeyApplied(false);
+          }}
+          style={{ width: '300px', marginRight: '10px' }}
+        />
+        <Button type="primary" onClick={handleSaveApiKey}>
+          Apply
+        </Button>
+        {isApiKeyApplied && (
+          <CheckCircleOutlined
+            style={{ color: 'green', marginLeft: '10px', fontSize: '18px' }}
+          />
+        )}
+      </div>
       <div style={{ marginTop: '20px' }}>
         <Space>
           <Button type="default" danger onClick={handleClearList}>
@@ -120,6 +181,7 @@ function VideoUpload() {
             type="primary"
             onClick={handleViewSummaries}
             loading={loading}
+            disabled={isViewSummariesDisabled}
           >
             View Summaries
           </Button>

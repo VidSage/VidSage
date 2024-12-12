@@ -8,7 +8,9 @@ export type Channels =
   | 'gen-storyline'
   | 'gen-video'
   | 'select-videos'
-  | 'save-video';
+  | 'save-video'
+  | 'set-api-key'
+  | 'validate-api-key';
 
 const electronHandler = {
   ipcRenderer: {

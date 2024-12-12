@@ -35,10 +35,13 @@ ensureDirectoryExists(tempDataPath);
  * @param args - taskId: string, files: VideoFile[]
  * @returns a list of VideoSummary objects
  */
-async function generateSummaries(args: {
-  taskId: string;
-  files: VideoFile[];
-}): Promise<VideoSummary[]> {
+async function generateSummaries(
+  args: {
+    taskId: string;
+    files: VideoFile[];
+  },
+  storedApiKey: string,
+): Promise<VideoSummary[]> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputJSONAbsPath = path.join(tempDataPath, args.taskId, 'output.json');
@@ -47,7 +50,7 @@ async function generateSummaries(args: {
   await new Promise<void>((resolve, reject) => {
     execFile(
       vidSageBinary,
-      ['generateSummaries', inputJSONAbsPath, outputJSONAbsPath],
+      ['generateSummaries', inputJSONAbsPath, outputJSONAbsPath, storedApiKey],
       (error, stdout, stderr) => {
         if (error) {
           return reject(error);
@@ -78,12 +81,15 @@ async function generateSummaries(args: {
  * @param args - taskId: string, summaries: VideoSummary[], prompt: string, duration: number
  * @returns a list of Segment objects
  */
-async function generateStoryline(args: {
-  taskId: string;
-  summaries: VideoSummary[];
-  prompt: string;
-  duration: number;
-}): Promise<Segment[]> {
+async function generateStoryline(
+  args: {
+    taskId: string;
+    summaries: VideoSummary[];
+    prompt: string;
+    duration: number;
+  },
+  storedApiKey: string,
+): Promise<Segment[]> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputJSONAbsPath = path.join(tempDataPath, args.taskId, 'output.json');
@@ -92,7 +98,7 @@ async function generateStoryline(args: {
   await new Promise<void>((resolve, reject) => {
     execFile(
       vidSageBinary,
-      ['generateStoryline', inputJSONAbsPath, outputJSONAbsPath],
+      ['generateStoryline', inputJSONAbsPath, outputJSONAbsPath, storedApiKey],
       (error, stdout, stderr) => {
         if (error) {
           return reject(error);
@@ -123,10 +129,13 @@ async function generateStoryline(args: {
  * @param args - taskId: string, segments: Segment[]
  * @returns the absolute file path to the generated video
  */
-async function generateVideo(args: {
-  taskId: string;
-  segments: Segment[];
-}): Promise<string> {
+async function generateVideo(
+  args: {
+    taskId: string;
+    segments: Segment[];
+  },
+  storedApiKey: string,
+): Promise<string> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputVideoAbsPath = path.join(tempDataPath, args.taskId, 'output.mp4');
@@ -135,7 +144,7 @@ async function generateVideo(args: {
   await new Promise<void>((resolve, reject) => {
     execFile(
       vidSageBinary,
-      ['generateVideo', inputJSONAbsPath, outputVideoAbsPath],
+      ['generateVideo', inputJSONAbsPath, outputVideoAbsPath, storedApiKey],
       (error, stdout, stderr) => {
         if (error) {
           return reject(error);
