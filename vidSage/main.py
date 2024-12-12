@@ -5,6 +5,24 @@ import dotenv
 import os
 from openai import OpenAI
 import uuid
+import subprocess
+import json
+
+
+def get_debug_info():
+    # get PATH variable
+    path = os.getenv("PATH")
+    # get the location of ffmpeg
+    ffmpeg_path = subprocess.run(["which", "ffmpeg"], stdout=subprocess.PIPE).stdout.decode().strip()
+    # get ffmpeg version
+    ffmpeg_version = subprocess.run([ffmpeg_path, "-version"], stdout=subprocess.PIPE).stdout.decode().strip()
+
+    ret = {
+        "path": path,
+        "ffmpeg_path": ffmpeg_path,
+        "ffmpeg_version": ffmpeg_version
+    }
+    print(json.dumps(ret))
 
 
 if __name__ == "__main__":
@@ -35,6 +53,9 @@ if __name__ == "__main__":
         generate_storyline(input_json_path, output_path, client)
     elif command == "generateVideo":
         generate_video(input_json_path, output_path)
+    elif command == "getDebugInfo":
+        debug_info = get_debug_info(output_path)
+        print(debug_info)
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)

@@ -172,7 +172,8 @@
       "dist",
       "node_modules",
       "package.json",
-      "vidSage"
+      "vidSage",
+      "bin"
     ],
     "mac": {
       "sign": ".erb/scripts/notarize.js",

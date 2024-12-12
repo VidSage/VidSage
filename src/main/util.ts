@@ -2,6 +2,8 @@
 import { URL } from 'url';
 import path from 'path';
 import fs from 'fs/promises';
+import webpackPaths from '../../.erb/configs/webpack.paths';
+import { execFile } from 'child_process';
 
 export function resolveHtmlPath(htmlFileName: string) {
   if (process.env.NODE_ENV === 'development') {
@@ -25,4 +27,13 @@ export async function writeJSONFile(
 ): Promise<void> {
   const jsonString = JSON.stringify(data, null, 2);
   await fs.writeFile(absolutePath, jsonString, 'utf-8');
+}
+
+export async function injectBundleExecutablePath() {
+  const isDebug =
+    process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
+  const ExecPath = isDebug
+    ? path.join(webpackPaths.appPath, 'bin')
+    : path.join(__dirname, 'bin');
+  process.env.PATH = `${ExecPath}${path.delimiter}${process.env.PATH}`;
 }
