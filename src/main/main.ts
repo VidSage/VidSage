@@ -15,7 +15,7 @@ import log from 'electron-log';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import * as fs from 'fs';
-import OpenAI from 'openai';
+import { OpenAI, AzureOpenAI } from 'openai';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import {
@@ -51,6 +51,14 @@ let mainWindow: BrowserWindow | null = null;
 
 let storedApiKey: string | null = null;
 
+let storedAzureCredentials: {
+  endpoint: string;
+  deploymentName: string;
+  key: string;
+} | null = null;
+
+let useAzure: boolean = false;
+
 async function validateOpenAiKey(apiKey: string): Promise<boolean> {
   try {
     // Example: set the API key and try a minimal call
@@ -75,8 +83,44 @@ ipcMain.handle('validate-api-key', async (event, apiKey: string) => {
 
 ipcMain.handle('set-api-key', (event, apiKey: string) => {
   storedApiKey = apiKey;
+  useAzure = false;
   return { success: true };
 });
+
+ipcMain.handle(
+  'validate-azure-credentials',
+  async (event, { endpoint, deploymentName, key }) => {
+    try {
+      const apiVersion = '2024-10-01-preview';
+      const azure = new AzureOpenAI({
+        endpoint,
+        deployment: deploymentName,
+        apiKey: key,
+        apiVersion,
+      });
+
+      // Minimal call to check validity, e.g. list models
+      await azure.models.list();
+      return { valid: true };
+    } catch (error: any) {
+      console.error('Azure credentials validation failed:', error);
+      return {
+        valid: false,
+        error: 'Invalid Azure credentials or failed to validate',
+      };
+    }
+  },
+);
+
+ipcMain.handle(
+  'set-azure-credentials',
+  (event, { endpoint, deploymentName, key }) => {
+    // Store the Azure credentials...
+    storedAzureCredentials = { endpoint, deploymentName, key };
+    useAzure = true;
+    return { success: true };
+  },
+);
 
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
@@ -91,6 +135,8 @@ ipcMain.handle('gen-summary', async (event, args) => {
       files: args,
     },
     storedApiKey!,
+    storedAzureCredentials,
+    useAzure,
   );
   return summaries;
 });
@@ -103,19 +149,18 @@ ipcMain.handle('gen-storyline', async (event, args) => {
       prompt: args.prompt,
       duration: args.duration,
     },
-    storedApiKey!,
+    storedApiKey,
+    storedAzureCredentials,
+    useAzure,
   );
   return segments;
 });
 
 ipcMain.handle('gen-video', async (event, args) => {
-  const preview = await generateVideo(
-    {
-      taskId: generateTimestampedUUID(),
-      segments: args.storyline,
-    },
-    storedApiKey!,
-  );
+  const preview = await generateVideo({
+    taskId: generateTimestampedUUID(),
+    segments: args.storyline,
+  });
   return preview;
 });
 

@@ -40,7 +40,13 @@ async function generateSummaries(
     taskId: string;
     files: VideoFile[];
   },
-  storedApiKey: string,
+  storedApiKey: string | null,
+  storedAzureCredentials: {
+    key: string;
+    endpoint: string;
+    deploymentName: string;
+  } | null,
+  useAzure: boolean,
 ): Promise<VideoSummary[]> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
@@ -48,30 +54,62 @@ async function generateSummaries(
   await writeJSONFile(inputJSONAbsPath, args);
 
   await new Promise<void>((resolve, reject) => {
-    execFile(
-      vidSageBinary,
-      ['generateSummaries', inputJSONAbsPath, outputJSONAbsPath, storedApiKey],
-      (error, stdout, stderr) => {
-        if (error) {
-          return reject(error);
-        }
-        return resolve();
-      },
-    );
+    if (useAzure) {
+      execFile(
+        vidSageBinary,
+        [
+          'generateSummaries',
+          inputJSONAbsPath,
+          outputJSONAbsPath,
+          'azure',
+          storedAzureCredentials!.key,
+          storedAzureCredentials!.endpoint,
+          storedAzureCredentials!.deploymentName,
+        ],
+        (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve();
+        },
+      );
+    } else {
+      execFile(
+        vidSageBinary,
+        [
+          'generateSummaries',
+          inputJSONAbsPath,
+          outputJSONAbsPath,
+          'openai',
+          storedApiKey!,
+        ],
+        (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve();
+        },
+      );
+    }
   });
 
   // const result = spawnSync(
   //   'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
   //   [
   //     'vidSage/main.py',
-  //     'generateSummaries',
+  //     'generateStoryline',
   //     inputJSONAbsPath,
   //     outputJSONAbsPath,
+  //     'azure',
+  //     storedAzureCredentials!.key,
+  //     storedAzureCredentials!.endpoint,
+  //     storedAzureCredentials!.deploymentName,
   //   ],
   //   { encoding: 'utf-8' },
   // );
   // console.log(result.stdout);
   // console.log(result.stderr);
+
   const data = await readJSONFile(outputJSONAbsPath);
   return data as VideoSummary[];
 }
@@ -88,26 +126,62 @@ async function generateStoryline(
     prompt: string;
     duration: number;
   },
-  storedApiKey: string,
+  storedApiKey: string | null,
+  storedAzureCredentials: {
+    key: string;
+    endpoint: string;
+    deploymentName: string;
+  } | null,
+  useAzure: boolean,
 ): Promise<Segment[]> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputJSONAbsPath = path.join(tempDataPath, args.taskId, 'output.json');
   await writeJSONFile(inputJSONAbsPath, args);
 
-  await new Promise<void>((resolve, reject) => {
-    execFile(
-      vidSageBinary,
-      ['generateStoryline', inputJSONAbsPath, outputJSONAbsPath, storedApiKey],
-      (error, stdout, stderr) => {
-        if (error) {
-          return reject(error);
-        }
-        return resolve();
-      },
-    );
-  });
+  if (useAzure) {
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        vidSageBinary,
+        [
+          'generateStoryline',
+          inputJSONAbsPath,
+          outputJSONAbsPath,
+          'azure',
+          storedAzureCredentials!.key,
+          storedAzureCredentials!.endpoint,
+          storedAzureCredentials!.deploymentName,
+        ],
+        (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve();
+        },
+      );
+    });
+  } else {
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        vidSageBinary,
+        [
+          'generateStoryline',
+          inputJSONAbsPath,
+          outputJSONAbsPath,
+          'openai',
+          storedApiKey!,
+        ],
+        (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve();
+        },
+      );
+    });
+  }
 
+  // add python call for test
   // const result = spawnSync(
   //   'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
   //   [
@@ -115,11 +189,16 @@ async function generateStoryline(
   //     'generateStoryline',
   //     inputJSONAbsPath,
   //     outputJSONAbsPath,
+  //     'azure',
+  //     storedAzureCredentials!.key,
+  //     storedAzureCredentials!.endpoint,
+  //     storedAzureCredentials!.deploymentName,
   //   ],
   //   { encoding: 'utf-8' },
   // );
   // console.log(result.stdout);
   // console.log(result.stderr);
+
   const data = await readJSONFile(outputJSONAbsPath);
   return data as Segment[];
 }
@@ -129,13 +208,10 @@ async function generateStoryline(
  * @param args - taskId: string, segments: Segment[]
  * @returns the absolute file path to the generated video
  */
-async function generateVideo(
-  args: {
-    taskId: string;
-    segments: Segment[];
-  },
-  storedApiKey: string,
-): Promise<string> {
+async function generateVideo(args: {
+  taskId: string;
+  segments: Segment[];
+}): Promise<string> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputVideoAbsPath = path.join(tempDataPath, args.taskId, 'output.mp4');
@@ -144,7 +220,7 @@ async function generateVideo(
   await new Promise<void>((resolve, reject) => {
     execFile(
       vidSageBinary,
-      ['generateVideo', inputJSONAbsPath, outputVideoAbsPath, storedApiKey],
+      ['generateVideo', inputJSONAbsPath, outputVideoAbsPath],
       (error, stdout, stderr) => {
         if (error) {
           return reject(error);
