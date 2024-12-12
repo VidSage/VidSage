@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, List, Typography, Space, Avatar, message, Input } from 'antd';
-import { UploadOutlined, CheckCircleOutlined} from '@ant-design/icons';
+import { UploadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
 import summaryAtom from '../../states/summary';

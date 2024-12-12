@@ -17,12 +17,13 @@ import { format } from 'date-fns';
 import * as fs from 'fs';
 import OpenAI from 'openai';
 import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
+import { resolveHtmlPath, injectBundleExecutablePath } from './util';
 import {
   generateSummaries,
   generateStoryline,
   generateVideo,
   cleanup,
+  getDebugInfo,
 } from './vidSage';
 
 class AppUpdater {
@@ -156,6 +157,10 @@ ipcMain.handle('save-video', async (_, originalFilePath: string) => {
   }
 });
 
+ipcMain.handle('get-debug-info', async () => {
+  return getDebugInfo();
+});
+
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
@@ -261,6 +266,7 @@ app.on('will-quit', () => {
 app
   .whenReady()
   .then(() => {
+    injectBundleExecutablePath();
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
