@@ -10,7 +10,9 @@ export type Channels =
   | 'select-videos'
   | 'save-video'
   | 'set-api-key'
-  | 'validate-api-key';
+  | 'validate-api-key'
+  | 'set-azure-credentials'
+  | 'validate-azure-credentials';
 
 const electronHandler = {
   ipcRenderer: {

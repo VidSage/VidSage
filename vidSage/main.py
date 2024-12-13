@@ -3,7 +3,7 @@ import sys
 from tasks import generate_summaries, generate_storyline, generate_video, remove_temp_files
 import dotenv
 import os
-from openai import OpenAI
+from openai import OpenAI, AzureOpenAI
 import uuid
 import subprocess
 import json
@@ -33,29 +33,55 @@ if __name__ == "__main__":
     #     print("OPENAI_API_KEY environment variable not set.")
     #     sys.exit(1)
 
-    if len(sys.argv) == 1 and sys.argv[1] == 'cleanUp':
+    if len(sys.argv) == 2 and sys.argv[1] == 'cleanUp':
         remove_temp_files()
         sys.exit(0)
-    elif len(sys.argv) != 5:
-        print("Usage: python main.py <command> <input_json_path> <output_path> <api_key> | python main.py cleanUp")
+
+    if len(sys.argv) == 4 and sys.argv[1] == 'generateVideo':
+        input_json_path = sys.argv[2]
+        output_path = sys.argv[3]
+        generate_video(input_json_path, output_path)
+        sys.exit(0)
+
+    if len(sys.argv) < 5:
+        print("Usage:")
+        print("  python main.py cleanUp")
+        print("  python main.py <command> <input_json_path> <output_path> openai <api_key>")
+        print("  python main.py <command> <input_json_path> <output_path> azure <api_key> <endpoint> <deployment_name>")
         sys.exit(1)
 
     command = sys.argv[1]
     input_json_path = sys.argv[2]
     output_path = sys.argv[3]
-    api_key = sys.argv[4]
+    provider = sys.argv[4].lower()
 
-    client = OpenAI(api_key=api_key)
+    if provider not in ['openai', 'azure']:
+        print("Provider must be 'openai' or 'azure'.")
+        sys.exit(1)
+
+    if provider == 'openai':
+        if len(sys.argv) != 6:
+            print("Usage: python main.py <command> <input_json_path> <output_path> openai <api_key>")
+            sys.exit(1)
+        api_key = sys.argv[5]
+
+        # Instantiate OpenAI client for openai
+        client = OpenAI(api_key=api_key)
+
+    else:  # azure
+        if len(sys.argv) != 8:
+            print("Usage: python main.py <command> <input_json_path> <output_path> azure <api_key> <endpoint> <deployment_name>")
+            sys.exit(1)
+        api_key = sys.argv[5]
+        endpoint = sys.argv[6]
+        deployment_name = sys.argv[7]
+
+        client = AzureOpenAI(api_key=api_key, azure_endpoint=endpoint, azure_deployment=deployment_name, api_version='2024-10-01-preview')
 
     if command == "generateSummaries":
         generate_summaries(input_json_path, output_path, client)
     elif command == "generateStoryline":
         generate_storyline(input_json_path, output_path, client)
-    elif command == "generateVideo":
-        generate_video(input_json_path, output_path)
-    elif command == "getDebugInfo":
-        debug_info = get_debug_info(output_path)
-        print(debug_info)
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)

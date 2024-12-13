@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Button, List, Typography, Space, Avatar, message, Input } from 'antd';
+import {
+  Button,
+  List,
+  Typography,
+  Space,
+  Avatar,
+  message,
+  Input,
+  Radio,
+} from 'antd';
 import { UploadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
@@ -13,12 +22,20 @@ function VideoUpload() {
 
   const setSummaryAtom = useSetAtom(summaryAtom);
 
-  const [apiKey, setApiKey] = useState('');
-
   const [loading, setLoading] = useState(false);
 
+  // Provider selection: 'openai' or 'azure'
+  const [provider, setProvider] = useState<'openai' | 'azure'>('openai');
+
+  // For OpenAI
+  const [apiKey, setApiKey] = useState('');
   const [isApiKeyApplied, setIsApiKeyApplied] = useState(false);
 
+  // For Azure OpenAI
+  const [azureEndpoint, setAzureEndpoint] = useState('');
+  const [azureDeploymentName, setAzureDeploymentName] = useState('');
+  const [azureApiKey, setAzureApiKey] = useState('');
+  const [isAzureApplied, setIsAzureApplied] = useState(false);
   const generateSummaries = async (files: VideoFile[]) => {
     setLoading(true);
     const summaries = await window.electron.ipcRenderer.invoke(
@@ -67,9 +84,10 @@ function VideoUpload() {
     setVideos([]);
     message.info('Video list cleared.');
   };
-
-  const handleSaveApiKey = async () => {
+  
+  const handleSaveOpenAiApiKey = async () => {
     try {
+      setIsApiKeyApplied(false);
       // First validate the API key
       const { valid, error } = await window.electron.ipcRenderer.invoke(
         'validate-api-key',
@@ -97,7 +115,70 @@ function VideoUpload() {
     }
   };
 
-  const isViewSummariesDisabled = !apiKey.trim() || videos.length === 0;
+  const handleSaveAzureCredentials = async () => {
+    try {
+      setIsAzureApplied(false);
+
+      // Validate the Azure OpenAI credentials
+      const { valid, error } = await window.electron.ipcRenderer.invoke(
+        'validate-azure-credentials',
+        {
+          endpoint: azureEndpoint,
+          deploymentName: azureDeploymentName,
+          key: azureApiKey,
+        },
+      );
+      if (!valid) {
+        message.error(error || 'Invalid Azure credentials.');
+        return;
+      }
+
+      // If valid, set the Azure credentials
+      const { success } = await window.electron.ipcRenderer.invoke(
+        'set-azure-credentials',
+        {
+          endpoint: azureEndpoint,
+          deploymentName: azureDeploymentName,
+          key: azureApiKey,
+        },
+      );
+      if (success) {
+        message.success('Azure OpenAI credentials applied successfully.');
+        setIsAzureApplied(true);
+      } else {
+        message.error('Failed to apply Azure OpenAI credentials.');
+      }
+    } catch (error) {
+      message.error('An error occurred while applying the Azure credentials.');
+      console.error(error);
+    }
+  };
+
+  const isViewSummariesDisabled = (() => {
+    if (provider === 'openai') {
+      return !isApiKeyApplied || videos.length === 0;
+    }
+    return !isAzureApplied || videos.length === 0;
+  })();
+
+  const handleProviderChange = (e: any) => {
+    setProvider(e.target.value);
+    // Reset states when switching provider
+    setIsApiKeyApplied(false);
+    setIsAzureApplied(false);
+  };
+
+  // Determine which apply button icon and text to show
+  let applyButtonIcon: React.ReactNode = null;
+  let applyButtonText = 'Apply';
+
+  if (provider === 'openai' && isApiKeyApplied) {
+    applyButtonIcon = <CheckCircleOutlined className="check-animation" />;
+    applyButtonText = 'Applied';
+  } else if (provider === 'azure' && isAzureApplied) {
+    applyButtonIcon = <CheckCircleOutlined className="check-animation" />;
+    applyButtonText = 'Applied';
+  }
 
   return (
     <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -146,32 +227,94 @@ function VideoUpload() {
           add some.
         </Typography.Text>
       )}
-      <div
-        style={{
-          margin: '20px 0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Input.Password
-          placeholder="Enter OpenAI API Key"
-          value={apiKey}
-          onChange={(e) => {
-            setApiKey(e.target.value);
-            setIsApiKeyApplied(false);
-          }}
-          style={{ width: '300px', marginRight: '10px' }}
-        />
-        <Button type="primary" onClick={handleSaveApiKey}>
-          Apply
-        </Button>
-        {isApiKeyApplied && (
-          <CheckCircleOutlined
-            style={{ color: 'green', marginLeft: '10px', fontSize: '18px' }}
-          />
-        )}
+      <div style={{ marginBottom: '20px' }}>
+        <Radio.Group onChange={handleProviderChange} value={provider}>
+          <Radio value="openai">OpenAI</Radio>
+          <Radio value="azure">Azure OpenAI</Radio>
+        </Radio.Group>
       </div>
+
+      {provider === 'openai' && (
+        <>
+          <Typography.Text>
+            Enter your OpenAI API Key and then select videos to generate a
+            storyline.
+          </Typography.Text>
+          <div
+            style={{
+              margin: '20px 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Input.Password
+              placeholder="Enter OpenAI API Key"
+              value={apiKey}
+              onChange={(e) => {
+                setApiKey(e.target.value);
+                setIsApiKeyApplied(false);
+              }}
+              style={{ width: '300px', marginRight: '10px' }}
+            />
+            <Button
+              type="primary"
+              onClick={handleSaveOpenAiApiKey}
+              icon={applyButtonIcon}
+            >
+              {applyButtonText}
+            </Button>
+          </div>
+        </>
+      )}
+
+      {provider === 'azure' && (
+        <>
+          <Typography.Text>
+            Enter your Azure OpenAI credentials (Endpoint, Deployment Name, and
+            Key).
+          </Typography.Text>
+          <div style={{ marginTop: '20px' }}>
+            <Input
+              placeholder="Endpoint URL"
+              value={azureEndpoint}
+              onChange={(e) => {
+                setAzureEndpoint(e.target.value);
+                setIsAzureApplied(false);
+              }}
+              style={{ width: '300px', marginBottom: '10px' }}
+            />
+            <br />
+            <Input
+              placeholder="Deployment Name"
+              value={azureDeploymentName}
+              onChange={(e) => {
+                setAzureDeploymentName(e.target.value);
+                setIsAzureApplied(false);
+              }}
+              style={{ width: '300px', marginBottom: '10px' }}
+            />
+            <br />
+            <Input.Password
+              placeholder="API Key"
+              value={azureApiKey}
+              onChange={(e) => {
+                setAzureApiKey(e.target.value);
+                setIsAzureApplied(false);
+              }}
+              style={{ width: '300px', marginBottom: '10px' }}
+            />
+            <br />
+            <Button
+              type="primary"
+              onClick={handleSaveAzureCredentials}
+              icon={applyButtonIcon}
+            >
+              {applyButtonText}
+            </Button>
+          </div>
+        </>
+      )}
       <div style={{ marginTop: '20px' }}>
         <Space>
           <Button type="default" danger onClick={handleClearList}>

@@ -44,7 +44,13 @@ async function generateSummaries(
     taskId: string;
     files: VideoFile[];
   },
-  storedApiKey: string,
+  storedApiKey: string | null,
+  storedAzureCredentials: {
+    key: string;
+    endpoint: string;
+    deploymentName: string;
+  } | null,
+  useAzure: boolean,
 ): Promise<VideoSummary[]> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
   await injectBundleExecutablePath();
@@ -53,18 +59,45 @@ async function generateSummaries(
   await writeJSONFile(inputJSONAbsPath, args);
 
   await new Promise<void>((resolve, reject) => {
-    execFile(
-      vidSageBinary,
-      ['generateSummaries', inputJSONAbsPath, outputJSONAbsPath, storedApiKey],
-      (error, stdout, stderr) => {
-        if (error) {
-          return reject(error);
-        }
-        return resolve();
-      },
-    );
+    if (useAzure) {
+      execFile(
+        vidSageBinary,
+        [
+          'generateSummaries',
+          inputJSONAbsPath,
+          outputJSONAbsPath,
+          'azure',
+          storedAzureCredentials!.key,
+          storedAzureCredentials!.endpoint,
+          storedAzureCredentials!.deploymentName,
+        ],
+        (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve();
+        },
+      );
+    } else {
+      execFile(
+        vidSageBinary,
+        [
+          'generateSummaries',
+          inputJSONAbsPath,
+          outputJSONAbsPath,
+          'openai',
+          storedApiKey!,
+        ],
+        (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve();
+        },
+      );
+    }
   });
-
+    
   const data = await readJSONFile(outputJSONAbsPath);
   return data as VideoSummary[];
 }
@@ -81,7 +114,13 @@ async function generateStoryline(
     prompt: string;
     duration: number;
   },
-  storedApiKey: string,
+  storedApiKey: string | null,
+  storedAzureCredentials: {
+    key: string;
+    endpoint: string;
+    deploymentName: string;
+  } | null,
+  useAzure: boolean,
 ): Promise<Segment[]> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
   await injectBundleExecutablePath();
@@ -89,19 +128,48 @@ async function generateStoryline(
   const outputJSONAbsPath = path.join(tempDataPath, args.taskId, 'output.json');
   await writeJSONFile(inputJSONAbsPath, args);
 
-  await new Promise<void>((resolve, reject) => {
-    execFile(
-      vidSageBinary,
-      ['generateStoryline', inputJSONAbsPath, outputJSONAbsPath, storedApiKey],
-      (error, stdout, stderr) => {
-        if (error) {
-          return reject(error);
-        }
-        return resolve();
-      },
-    );
-  });
-
+  if (useAzure) {
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        vidSageBinary,
+        [
+          'generateStoryline',
+          inputJSONAbsPath,
+          outputJSONAbsPath,
+          'azure',
+          storedAzureCredentials!.key,
+          storedAzureCredentials!.endpoint,
+          storedAzureCredentials!.deploymentName,
+        ],
+        (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve();
+        },
+      );
+    });
+  } else {
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        vidSageBinary,
+        [
+          'generateStoryline',
+          inputJSONAbsPath,
+          outputJSONAbsPath,
+          'openai',
+          storedApiKey!,
+        ],
+        (error, stdout, stderr) => {
+          if (error) {
+            return reject(error);
+          }
+          return resolve();
+        },
+      );
+    });
+  }
+    
   const data = await readJSONFile(outputJSONAbsPath);
   return data as Segment[];
 }
