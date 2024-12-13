@@ -165,7 +165,7 @@
   },
   "build": {
     "productName": "VidSage",
-    "appId": "com.vidsage.vidsage",
+    "appId": "com.wizeats.vidsage",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
@@ -226,8 +226,8 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "electron-react-boilerplate",
-      "repo": "electron-react-boilerplate"
+      "owner": "VidSage",
+      "repo": "VidSage"
     }
   },
   "engines": {
