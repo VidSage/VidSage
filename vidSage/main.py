@@ -1,5 +1,4 @@
 import sys
-
 from tasks import generate_summaries, generate_storyline, generate_video, remove_temp_files
 import dotenv
 import os
@@ -7,6 +6,7 @@ from openai import OpenAI, AzureOpenAI
 import uuid
 import subprocess
 import json
+import argparse
 
 
 def get_debug_info():
@@ -26,62 +26,69 @@ def get_debug_info():
 
 
 if __name__ == "__main__":
-    # dotenv.load_dotenv()
-    # # print(os.getenv("OPENAI_API_KEY"))
+    parser = argparse.ArgumentParser(description="A tool for generating video summaries, storylines, and final videos.")
+    subparsers = parser.add_subparsers(dest='command', help="Commands")
 
-    # if os.getenv("OPENAI_API_KEY") is None:
-    #     print("OPENAI_API_KEY environment variable not set.")
-    #     sys.exit(1)
+    # Command: cleanUp
+    clean_parser = subparsers.add_parser('cleanUp', help='Remove temporary files generated during processing.')
 
-    if len(sys.argv) == 2 and sys.argv[1] == 'cleanUp':
+    # Command: generateVideo
+    video_parser = subparsers.add_parser('generateVideo', help='Generate a final video based on JSON input.')
+    video_parser.add_argument('input_json_path', help='Path to the input JSON file.')
+    video_parser.add_argument('output_path', help='Path to the output video file.')
+
+    # Command: generateSummaries
+    summaries_parser = subparsers.add_parser('generateSummaries', help='Generate summaries using the specified provider.')
+    summaries_parser.add_argument('input_json_path', help='Path to the input JSON file.')
+    summaries_parser.add_argument('output_path', help='Path to the output file.')
+    summaries_parser.add_argument('provider', choices=['openai', 'azure'], help='Provider to use (openai or azure).')
+    summaries_parser.add_argument('api_key', help='API key for the provider.')
+    summaries_parser.add_argument('--endpoint', help='Azure endpoint (required if provider is azure).')
+    summaries_parser.add_argument('--deployment_name', help='Azure deployment name (required if provider is azure).')
+
+    # Command: generateStoryline
+    storyline_parser = subparsers.add_parser('generateStoryline', help='Generate storyline using the specified provider.')
+    storyline_parser.add_argument('input_json_path', help='Path to the input JSON file.')
+    storyline_parser.add_argument('output_path', help='Path to the output file.')
+    storyline_parser.add_argument('provider', choices=['openai', 'azure'], help='Provider to use (openai or azure).')
+    storyline_parser.add_argument('api_key', help='API key for the provider.')
+    storyline_parser.add_argument('--endpoint', help='Azure endpoint (required if provider is azure).')
+    storyline_parser.add_argument('--deployment_name', help='Azure deployment name (required if provider is azure).')
+
+    args = parser.parse_args()
+
+    if args.command == 'cleanUp':
         remove_temp_files()
         sys.exit(0)
 
-    if len(sys.argv) == 4 and sys.argv[1] == 'generateVideo':
-        input_json_path = sys.argv[2]
-        output_path = sys.argv[3]
-        generate_video(input_json_path, output_path)
+    elif args.command == 'generateVideo':
+        generate_video(args.input_json_path, args.output_path)
         sys.exit(0)
 
-    if len(sys.argv) < 5:
-        print("Usage:")
-        print("  python main.py cleanUp")
-        print("  python main.py <command> <input_json_path> <output_path> openai <api_key>")
-        print("  python main.py <command> <input_json_path> <output_path> azure <api_key> <endpoint> <deployment_name>")
-        sys.exit(1)
+    elif args.command in ['generateSummaries', 'generateStoryline']:
+        provider = args.provider.lower()
 
-    command = sys.argv[1]
-    input_json_path = sys.argv[2]
-    output_path = sys.argv[3]
-    provider = sys.argv[4].lower()
+        # Validate provider-specific arguments
+        if provider == 'azure':
+            if not args.endpoint or not args.deployment_name:
+                parser.error("For azure, --endpoint and --deployment_name are required.")
 
-    if provider not in ['openai', 'azure']:
-        print("Provider must be 'openai' or 'azure'.")
-        sys.exit(1)
+        # Instantiate the client
+        if provider == 'openai':
+            client = OpenAI(api_key=args.api_key)
+        else:
+            client = AzureOpenAI(
+                api_key=args.api_key,
+                azure_endpoint=args.endpoint,
+                azure_deployment=args.deployment_name,
+                api_version='2024-10-01-preview'
+            )
 
-    if provider == 'openai':
-        if len(sys.argv) != 6:
-            print("Usage: python main.py <command> <input_json_path> <output_path> openai <api_key>")
-            sys.exit(1)
-        api_key = sys.argv[5]
+        if args.command == 'generateSummaries':
+            generate_summaries(args.input_json_path, args.output_path, client)
+        else:  # generateStoryline
+            generate_storyline(args.input_json_path, args.output_path, client)
 
-        # Instantiate OpenAI client for openai
-        client = OpenAI(api_key=api_key)
-
-    else:  # azure
-        if len(sys.argv) != 8:
-            print("Usage: python main.py <command> <input_json_path> <output_path> azure <api_key> <endpoint> <deployment_name>")
-            sys.exit(1)
-        api_key = sys.argv[5]
-        endpoint = sys.argv[6]
-        deployment_name = sys.argv[7]
-
-        client = AzureOpenAI(api_key=api_key, azure_endpoint=endpoint, azure_deployment=deployment_name, api_version='2024-10-01-preview')
-
-    if command == "generateSummaries":
-        generate_summaries(input_json_path, output_path, client)
-    elif command == "generateStoryline":
-        generate_storyline(input_json_path, output_path, client)
     else:
-        print(f"Unknown command: {command}")
+        parser.print_help()
         sys.exit(1)

@@ -68,7 +68,9 @@ async function generateSummaries(
           outputJSONAbsPath,
           'azure',
           storedAzureCredentials!.key,
+          '--endpoint',
           storedAzureCredentials!.endpoint,
+          '--deployment_name',
           storedAzureCredentials!.deploymentName,
         ],
         (error, stdout, stderr) => {
@@ -97,7 +99,7 @@ async function generateSummaries(
       );
     }
   });
-    
+
   const data = await readJSONFile(outputJSONAbsPath);
   return data as VideoSummary[];
 }
@@ -138,7 +140,9 @@ async function generateStoryline(
           outputJSONAbsPath,
           'azure',
           storedAzureCredentials!.key,
+          '--endpoint',
           storedAzureCredentials!.endpoint,
+          '--deployment_name',
           storedAzureCredentials!.deploymentName,
         ],
         (error, stdout, stderr) => {
@@ -169,7 +173,7 @@ async function generateStoryline(
       );
     });
   }
-    
+
   const data = await readJSONFile(outputJSONAbsPath);
   return data as Segment[];
 }
