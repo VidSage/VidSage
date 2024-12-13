@@ -7,6 +7,7 @@ import uuid
 import subprocess
 import json
 import argparse
+import logging
 
 
 def get_debug_info():
@@ -59,10 +60,13 @@ if __name__ == "__main__":
 
     if args.command == 'cleanUp':
         remove_temp_files()
+        logging.debug("Temporary files removed.")
         sys.exit(0)
 
     elif args.command == 'generateVideo':
+        logging.debug("Generating video...")
         generate_video(args.input_json_path, args.output_path)
+        logging.debug("Video generated.")
         sys.exit(0)
 
     elif args.command in ['generateSummaries', 'generateStoryline']:
@@ -85,9 +89,13 @@ if __name__ == "__main__":
             )
 
         if args.command == 'generateSummaries':
+            logging.debug("Generating summaries...")
             generate_summaries(args.input_json_path, args.output_path, client)
+            logging.debug("Summaries generated.")
         else:  # generateStoryline
+            logging.debug("Generating storyline...")
             generate_storyline(args.input_json_path, args.output_path, client)
+            logging.debug("Storyline generated.")
 
     else:
         parser.print_help()
