@@ -5,6 +5,7 @@ import shutil
 
 from utils import read_json_file, write_json_file, preprocess_video, extract_frames_fixed, reduce_resolution, base64_encode_frames, concat_videos, clip_video
 from videoObjects import VideoFile, Segment, VideoSummary, Story, Scene, Description
+import logging
 
 
 
@@ -23,11 +24,12 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
     scenes = {}
 
     #preprocess the video files and detect scenes
+    logging.debug("Preprocessing videos...")
     for file in files:
         input_vid_path = file['absolutePath']
         filename = os.path.basename(input_vid_path)
         output_vid_path = f'{task_folder}/{filename}'
-        print(output_vid_path)
+        logging.debug(f"Preprocessing video: {input_vid_path}")
         preprocess_video(input_vid_path, output_vid_path)
 
         scene_list = detect(output_vid_path, HashDetector(threshold=0.45))
@@ -37,13 +39,14 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
 
         scenes[file['absolutePath']] = scene_sec
         os.remove(output_vid_path)
+    logging.debug("Preprocessing complete.")
 
-    print('finished preprocessing')
+    logging.debug("Generating summaries...")
     #generate summaries
     summaries = []
     for file in files:
         input_vid_path = file['absolutePath']
-        print(input_vid_path)
+        logging.debug(f"Generating summary for video: {input_vid_path}")
         frames = extract_frames_fixed(input_vid_path)
         reduced_frames = reduce_resolution(frames, 1280, 720)
         encoded_frames = base64_encode_frames(reduced_frames)
@@ -95,18 +98,16 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
                         desc = response.choices[0].message.parsed
                         output_messages.append(desc.description)
                         ratings.append(desc.aestheticRating)
-                        # print(len(encoding.encode(output_messages[-1])))
-                        # print(response.choices[0].message.content)
                         break
                     except Exception as e:
-                        print(e)
+                        logging.error(e)
                         messages[1]['content'][0]['text'] += "\n Your last response was filtered by the Azure content filter. Please avoid using inappropriate language."
-                        print("Retrying...")
+
             if output_messages:
                 segment.description = output_messages[-1]
             segments.append(segment)
-            print(segment.startTimeSec, segment.endTimeSec)
-            print(segment.description)
+            logging.debug(f"Segment from {startTimeSec} to {endTimeSec} seconds: {segment.description}")
+            logging.debug(f"Rating: {ratings[-1]}")
 
         whole = ''
         for segment in segments:
@@ -136,11 +137,10 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
                 whole_summary = response.choices[0].message.content
                 break
             except Exception as e:
-                print(e)
-                print("Retrying...")
+                logging.error(e)
+                messages[0]['content'][0]['text'] += "\n Your last response was filtered by the Azure content filter. Please avoid using inappropriate language."
 
         rating = round(sum(ratings) / len(ratings))
-        print(rating)
         summaries.append(VideoSummary(VideoFile(file['absolutePath'], os.path.basename(file['name'])), whole_summary, rating, segments))
 
     write_json_file(output_json_path, [summary.to_dict() for summary in summaries])
@@ -205,12 +205,11 @@ def generate_storyline(input_json_path: str, output_json_path: str, llm_client) 
               messages=messages,
               max_tokens=2000
           )
-          # print(response.choices[0].message.parsed)
           out_story = response.choices[0].message.parsed
           break
       except Exception as e:
-          print(e)
-          print("Retrying...")
+          logging.error(e)
+          messages[1]['content'][0]['text'] += "\n Your last response was filtered by the Azure content filter. Please avoid using inappropriate language."
 
     storyline = []
 
@@ -219,7 +218,7 @@ def generate_storyline(input_json_path: str, output_json_path: str, llm_client) 
     for scene in out_story.scenes:
         input_vid_path = scene.file_path
         if not os.path.exists(input_vid_path):
-            print(f"File {input_vid_path} does not exist")
+            logging.error(f"File {input_vid_path} does not exist.")
             continue
         # use ffmpeg to extract the scene
         filename = os.path.basename(input_vid_path)

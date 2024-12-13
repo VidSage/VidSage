@@ -79,7 +79,6 @@ def concat_videos(input_list_path: str, output_vid_path: str, silent=True) -> No
 
 
 def extract_frames_fixed(video_path, interval = 1):
-    print(video_path)
     video = cv2.VideoCapture(video_path)
     frames = []
     fps = video.get(cv2.CAP_PROP_FPS)
@@ -88,7 +87,6 @@ def extract_frames_fixed(video_path, interval = 1):
     count = 0
 
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-    print(total_frames, frame_interval)
     for i in range(0, total_frames, frame_interval):
         video.set(cv2.CAP_PROP_POS_FRAMES, i)
         ret, frame = video.read()
