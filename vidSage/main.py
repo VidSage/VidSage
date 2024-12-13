@@ -5,6 +5,24 @@ import dotenv
 import os
 from openai import OpenAI, AzureOpenAI
 import uuid
+import subprocess
+import json
+
+
+def get_debug_info():
+    # get PATH variable
+    path = os.getenv("PATH")
+    # get the location of ffmpeg
+    ffmpeg_path = subprocess.run(["which", "ffmpeg"], stdout=subprocess.PIPE).stdout.decode().strip()
+    # get ffmpeg version
+    ffmpeg_version = subprocess.run([ffmpeg_path, "-version"], stdout=subprocess.PIPE).stdout.decode().strip()
+
+    ret = {
+        "path": path,
+        "ffmpeg_path": ffmpeg_path,
+        "ffmpeg_version": ffmpeg_version
+    }
+    print(json.dumps(ret))
 
 
 if __name__ == "__main__":

@@ -17,12 +17,13 @@ import { format } from 'date-fns';
 import * as fs from 'fs';
 import { OpenAI, AzureOpenAI } from 'openai';
 import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
+import { resolveHtmlPath, injectBundleExecutablePath } from './util';
 import {
   generateSummaries,
   generateStoryline,
   generateVideo,
   cleanup,
+  getDebugInfo,
 } from './vidSage';
 
 class AppUpdater {
@@ -157,10 +158,13 @@ ipcMain.handle('gen-storyline', async (event, args) => {
 });
 
 ipcMain.handle('gen-video', async (event, args) => {
-  const preview = await generateVideo({
-    taskId: generateTimestampedUUID(),
-    segments: args.storyline,
-  });
+  const preview = await generateVideo(
+    {
+      taskId: generateTimestampedUUID(),
+      segments: args.storyline,
+    },
+    storedApiKey!,
+  );
   return preview;
 });
 
@@ -199,6 +203,10 @@ ipcMain.handle('save-video', async (_, originalFilePath: string) => {
     console.error('Failed to save video:', error);
     return { success: false, error };
   }
+});
+
+ipcMain.handle('get-debug-info', async () => {
+  return getDebugInfo();
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -306,6 +314,7 @@ app.on('will-quit', () => {
 app
   .whenReady()
   .then(() => {
+    injectBundleExecutablePath();
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the

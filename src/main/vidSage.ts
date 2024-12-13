@@ -1,11 +1,15 @@
 /* eslint-disable no-empty-function */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { execFile, spawnSync } from 'child_process';
+import { execFile, execSync, spawnSync } from 'child_process';
 import path from 'path';
 import { app } from 'electron';
 import * as fs from 'fs';
 import type { VideoFile, VideoSummary, Segment } from './types';
-import { readJSONFile, writeJSONFile } from './util';
+import {
+  readJSONFile,
+  writeJSONFile,
+  injectBundleExecutablePath,
+} from './util';
 import webpackPaths from '../../.erb/configs/webpack.paths';
 
 const isDebug =
@@ -49,6 +53,7 @@ async function generateSummaries(
   useAzure: boolean,
 ): Promise<VideoSummary[]> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
+  await injectBundleExecutablePath();
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputJSONAbsPath = path.join(tempDataPath, args.taskId, 'output.json');
   await writeJSONFile(inputJSONAbsPath, args);
@@ -92,24 +97,7 @@ async function generateSummaries(
       );
     }
   });
-
-  // const result = spawnSync(
-  //   'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
-  //   [
-  //     'vidSage/main.py',
-  //     'generateStoryline',
-  //     inputJSONAbsPath,
-  //     outputJSONAbsPath,
-  //     'azure',
-  //     storedAzureCredentials!.key,
-  //     storedAzureCredentials!.endpoint,
-  //     storedAzureCredentials!.deploymentName,
-  //   ],
-  //   { encoding: 'utf-8' },
-  // );
-  // console.log(result.stdout);
-  // console.log(result.stderr);
-
+    
   const data = await readJSONFile(outputJSONAbsPath);
   return data as VideoSummary[];
 }
@@ -135,6 +123,7 @@ async function generateStoryline(
   useAzure: boolean,
 ): Promise<Segment[]> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
+  await injectBundleExecutablePath();
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputJSONAbsPath = path.join(tempDataPath, args.taskId, 'output.json');
   await writeJSONFile(inputJSONAbsPath, args);
@@ -180,25 +169,7 @@ async function generateStoryline(
       );
     });
   }
-
-  // add python call for test
-  // const result = spawnSync(
-  //   'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
-  //   [
-  //     'vidSage/main.py',
-  //     'generateStoryline',
-  //     inputJSONAbsPath,
-  //     outputJSONAbsPath,
-  //     'azure',
-  //     storedAzureCredentials!.key,
-  //     storedAzureCredentials!.endpoint,
-  //     storedAzureCredentials!.deploymentName,
-  //   ],
-  //   { encoding: 'utf-8' },
-  // );
-  // console.log(result.stdout);
-  // console.log(result.stderr);
-
+    
   const data = await readJSONFile(outputJSONAbsPath);
   return data as Segment[];
 }
@@ -208,11 +179,15 @@ async function generateStoryline(
  * @param args - taskId: string, segments: Segment[]
  * @returns the absolute file path to the generated video
  */
-async function generateVideo(args: {
-  taskId: string;
-  segments: Segment[];
-}): Promise<string> {
+async function generateVideo(
+  args: {
+    taskId: string;
+    segments: Segment[];
+  },
+  storedApiKey: string,
+): Promise<string> {
   ensureDirectoryExists(path.join(tempDataPath, args.taskId));
+  await injectBundleExecutablePath();
   const inputJSONAbsPath = path.join(tempDataPath, args.taskId, 'input.json');
   const outputVideoAbsPath = path.join(tempDataPath, args.taskId, 'output.mp4');
   await writeJSONFile(inputJSONAbsPath, args);
@@ -220,7 +195,7 @@ async function generateVideo(args: {
   await new Promise<void>((resolve, reject) => {
     execFile(
       vidSageBinary,
-      ['generateVideo', inputJSONAbsPath, outputVideoAbsPath],
+      ['generateVideo', inputJSONAbsPath, outputVideoAbsPath, storedApiKey],
       (error, stdout, stderr) => {
         if (error) {
           return reject(error);
@@ -230,13 +205,6 @@ async function generateVideo(args: {
     );
   });
 
-  // const result = spawnSync(
-  //   'C:\\Users\\wch93\\anaconda3\\envs\\llm\\python.exe',
-  //   ['vidSage/main.py', 'generateVideo', inputJSONAbsPath, outputVideoAbsPath],
-  //   { encoding: 'utf-8' },
-  // );
-  // console.log(result.stdout);
-  // console.log(result.stderr);
   return outputVideoAbsPath;
 }
 
@@ -244,6 +212,7 @@ async function generateVideo(args: {
  * cleanup temporary resources
  */
 async function cleanup(): Promise<void> {
+  await injectBundleExecutablePath();
   await new Promise<void>((resolve, reject) => {
     execFile(vidSageBinary, ['cleanUp'], (error, stdout, stderr) => {
       if (error) {
@@ -254,4 +223,15 @@ async function cleanup(): Promise<void> {
   });
 }
 
-export { generateSummaries, generateStoryline, generateVideo, cleanup };
+async function getDebugInfo(): Promise<string> {
+  const result = spawnSync(vidSageBinary, ['getDebugInfo']);
+  return result.stdout.toString();
+}
+
+export {
+  generateSummaries,
+  generateStoryline,
+  generateVideo,
+  cleanup,
+  getDebugInfo,
+};

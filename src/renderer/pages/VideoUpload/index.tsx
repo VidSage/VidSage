@@ -22,11 +22,7 @@ function VideoUpload() {
 
   const setSummaryAtom = useSetAtom(summaryAtom);
 
-  // const [apiKey, setApiKey] = useState('');
-
   const [loading, setLoading] = useState(false);
-
-  // const [isApiKeyApplied, setIsApiKeyApplied] = useState(false);
 
   // Provider selection: 'openai' or 'azure'
   const [provider, setProvider] = useState<'openai' | 'azure'>('openai');
@@ -40,7 +36,6 @@ function VideoUpload() {
   const [azureDeploymentName, setAzureDeploymentName] = useState('');
   const [azureApiKey, setAzureApiKey] = useState('');
   const [isAzureApplied, setIsAzureApplied] = useState(false);
-
   const generateSummaries = async (files: VideoFile[]) => {
     setLoading(true);
     const summaries = await window.electron.ipcRenderer.invoke(
@@ -89,7 +84,7 @@ function VideoUpload() {
     setVideos([]);
     message.info('Video list cleared.');
   };
-
+  
   const handleSaveOpenAiApiKey = async () => {
     try {
       setIsApiKeyApplied(false);

@@ -33,6 +33,7 @@ vidSage/dist
 vidSage/main.spec
 
 release/app/vidSage
+release/app/bin/ffmpeg*
 
 .env
 
