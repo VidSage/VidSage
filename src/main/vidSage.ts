@@ -17,7 +17,7 @@ const isDebug =
 
 const vidSage = isDebug
   ? path.join(webpackPaths.appPath, 'vidSage')
-  : path.join(__dirname, '../../vidSage');
+  : path.join(process.resourcesPath, 'core');
 
 const mainPath = process.platform === 'win32' ? 'main.exe' : 'main';
 

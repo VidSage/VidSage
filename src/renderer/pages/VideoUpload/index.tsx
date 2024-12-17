@@ -84,7 +84,7 @@ function VideoUpload() {
     setVideos([]);
     message.info('Video list cleared.');
   };
-  
+
   const handleSaveOpenAiApiKey = async () => {
     try {
       setIsApiKeyApplied(false);

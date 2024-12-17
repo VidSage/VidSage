@@ -5,9 +5,12 @@ import cv2
 import base64
 import os
 import subprocess
+import sys
 
-
-
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 def read_json_file(file_path: str) -> Any:
     with open(file_path, 'r') as file:
@@ -20,11 +23,14 @@ def write_json_file(file_path: str, data: Any) -> None:
 
 def preprocess_video(input_vid_path: str, output_vid_path: str, fps=2, height=720, silent=True) -> None:
     """Preprocesses a video file to reduce its size and frame rate."""
-    if not shutil.which("ffmpeg"):
-        raise FileNotFoundError("ffmpeg not found on the system.")
+    # if not shutil.which("ffmpeg"):
+    #     raise FileNotFoundError("ffmpeg not found on the system.")
+
+    exec = resource_path("ffmpeg")
+
 
     command = [
-        "ffmpeg",
+        exec,
         "-i", input_vid_path,
         "-vf", f"scale=-2:{height}",
         "-r", str(fps),
@@ -40,11 +46,13 @@ def preprocess_video(input_vid_path: str, output_vid_path: str, fps=2, height=72
 
 def clip_video(input_vid_path: str, output_vid_path: str, start_time: int, end_time: int, silent=True) -> None:
     """Clips a video file."""
-    if not shutil.which("ffmpeg"):
-        raise FileNotFoundError("ffmpeg not found on the system.")
+    # if not shutil.which("ffmpeg"):
+    #     raise FileNotFoundError("ffmpeg not found on the system.")
+
+    exec = resource_path("ffmpeg")
 
     command = [
-        "ffmpeg",
+        exec,
         "-i", input_vid_path,
         "-ss", str(start_time),
         "-to", str(end_time),
@@ -59,11 +67,13 @@ def clip_video(input_vid_path: str, output_vid_path: str, start_time: int, end_t
 
 def concat_videos(input_list_path: str, output_vid_path: str, silent=True) -> None:
     """Concatenates multiple video files."""
-    if not shutil.which("ffmpeg"):
-        raise FileNotFoundError("ffmpeg not found on the system.")
+    # if not shutil.which("ffmpeg"):
+    #     raise FileNotFoundError("ffmpeg not found on the system.")
+
+    exec = resource_path("ffmpeg")
 
     command = [
-        "ffmpeg",
+        exec,
         "-f", "concat",
         "-safe", "0",
         "-i", input_list_path,
