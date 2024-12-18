@@ -58,8 +58,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # logging.basicConfig(filename='E:/debug.log', filemode='w', level=logging.DEBUG)
-
     logger = logging.getLogger()
 
     logger.debug("path:" + os.environ['PATH'])
