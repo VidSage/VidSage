@@ -34,6 +34,6 @@ export async function injectBundleExecutablePath() {
     process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
   const ExecPath = isDebug
     ? path.join(webpackPaths.appPath, 'bin')
-    : path.join(__dirname, 'bin');
+    : path.join(__dirname, '../../bin');
   process.env.PATH = `${ExecPath}${path.delimiter}${process.env.PATH}`;
 }
