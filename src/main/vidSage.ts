@@ -16,7 +16,7 @@ const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 const vidSage = isDebug
-  ? path.join(webpackPaths.appPath, 'vidSage')
+  ? path.join('../..', 'dist')
   : path.join(process.resourcesPath, 'core');
 
 const mainPath = process.platform === 'win32' ? 'main.exe' : 'main';

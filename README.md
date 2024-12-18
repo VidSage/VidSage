@@ -21,9 +21,7 @@ bash scripts/bundle-ffmpeg.sh [linux|mac|win] release/app/bin
 $ cd vidSage
 $ pip install -r requirements.txt
 $ pip install -U pyinstaller
-$ pyinstaller --onefile --noconsole main.py
-$ mkdir -p ../release/app/vidSage
-$ cp dist/main ../release/app/vidSage/
+$ pyinstaller --onefile --noconsole vidSage/main.py
 ```
 
 2. Start the Electron app:
