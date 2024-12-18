@@ -3,7 +3,6 @@ import { URL } from 'url';
 import path from 'path';
 import fs from 'fs/promises';
 import webpackPaths from '../../.erb/configs/webpack.paths';
-import { execFile } from 'child_process';
 
 export function resolveHtmlPath(htmlFileName: string) {
   if (process.env.NODE_ENV === 'development') {
@@ -33,7 +32,7 @@ export async function injectBundleExecutablePath() {
   const isDebug =
     process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
   const ExecPath = isDebug
-    ? path.join(webpackPaths.appPath, 'bin')
-    : path.join(__dirname, 'bin');
+    ? path.join(webpackPaths.rootPath, 'dist')
+    : path.join(process.resourcesPath, 'bin');
   process.env.PATH = `${ExecPath}${path.delimiter}${process.env.PATH}`;
 }

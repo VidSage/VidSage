@@ -58,15 +58,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    logger = logging.getLogger()
+
+    logger.debug("path:" + os.environ['PATH'])
+
     if args.command == 'cleanUp':
         remove_temp_files()
-        logging.debug("Temporary files removed.")
+        logger.debug("Temporary files removed.")
         sys.exit(0)
 
     elif args.command == 'generateVideo':
-        logging.debug("Generating video...")
+        logger.debug("Generating video...")
         generate_video(args.input_json_path, args.output_path)
-        logging.debug("Video generated.")
+        logger.debug("Video generated.")
         sys.exit(0)
 
     elif args.command in ['generateSummaries', 'generateStoryline']:
@@ -89,13 +93,13 @@ if __name__ == "__main__":
             )
 
         if args.command == 'generateSummaries':
-            logging.debug("Generating summaries...")
+            logger.debug("Generating summaries...")
             generate_summaries(args.input_json_path, args.output_path, client)
-            logging.debug("Summaries generated.")
+            logger.debug("Summaries generated.")
         else:  # generateStoryline
-            logging.debug("Generating storyline...")
+            logger.debug("Generating storyline...")
             generate_storyline(args.input_json_path, args.output_path, client)
-            logging.debug("Storyline generated.")
+            logger.debug("Storyline generated.")
 
     else:
         parser.print_help()
