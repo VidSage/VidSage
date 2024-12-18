@@ -225,7 +225,7 @@
       "./assets/**",
       {
         "from": "dist/",
-        "to": "core/",
+        "to": "bin/",
         "filter": [
           "**/*"
         ]
