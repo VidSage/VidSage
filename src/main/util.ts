@@ -32,7 +32,7 @@ export async function injectBundleExecutablePath() {
   const isDebug =
     process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
   const ExecPath = isDebug
-    ? path.join(webpackPaths.rootPath, 'dist')
-    : path.join(process.resourcesPath, 'bin');
+    ? path.join(webpackPaths.rootPath, 'assets/bin')
+    : path.join(process.resourcesPath, 'assets/bin');
   process.env.PATH = `${ExecPath}${path.delimiter}${process.env.PATH}`;
 }

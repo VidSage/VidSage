@@ -16,8 +16,8 @@ const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 const vidSage = isDebug
-  ? path.join('../..', 'dist')
-  : path.join(process.resourcesPath, 'bin');
+  ? path.join('../..', 'assets/bin')
+  : path.join(process.resourcesPath, 'assets/bin');
 
 const mainPath = process.platform === 'win32' ? 'main.exe' : 'main';
 

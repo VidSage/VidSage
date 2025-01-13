@@ -45,3 +45,5 @@ tmp/
 build
 dist
 main.spec
+
+assets/bin
