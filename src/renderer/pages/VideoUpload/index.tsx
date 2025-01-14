@@ -42,8 +42,12 @@ function VideoUpload() {
       'gen-summary',
       files,
     );
+    if (!summaries.success) {
+      // This is an error from main
+      throw new Error(summaries.error || 'Failed to generate summaries');
+    }
     setLoading(false);
-    setSummaryAtom(summaries);
+    setSummaryAtom(summaries.data);
   };
 
   const handleViewSummaries = () => {
@@ -55,6 +59,8 @@ function VideoUpload() {
     )
       .then(() => navigate('/storyline'))
       .catch((err) => {
+        setLoading(false);
+        message.error(err.message || 'Failed to generate summaries');
         console.error(err);
       });
   };
