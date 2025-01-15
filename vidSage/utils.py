@@ -11,19 +11,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 def read_json_file(file_path: str) -> Any:
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         return json.load(file)
 
 
 def write_json_file(file_path: str, data: Any) -> None:
-    with open(file_path, 'w') as file:
+    with open(file_path, 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4)
 
 def preprocess_video(input_vid_path: str, output_vid_path: str, fps=2, height=720, silent=True) -> None:
     """Preprocesses a video file to reduce its size and frame rate."""
-    if not shutil.which("ffmpeg"):
-        logger.error("ffmpeg not found on the system.")
-        raise FileNotFoundError("ffmpeg not found on the system.")
 
     command = [
         'ffmpeg',
@@ -62,9 +59,6 @@ def clip_video(input_vid_path: str, output_vid_path: str, start_time: int, end_t
 
 def concat_videos(input_list_path: str, output_vid_path: str, silent=True) -> None:
     """Concatenates multiple video files."""
-    if not shutil.which("ffmpeg"):
-        logger.error("ffmpeg not found on the system.")
-        raise FileNotFoundError("ffmpeg not found on the system.")
 
     command = [
         'ffmpeg',

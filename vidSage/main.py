@@ -1,3 +1,4 @@
+import shutil
 import sys
 from tasks import generate_summaries, generate_storyline, generate_video, remove_temp_files
 import dotenv
@@ -8,6 +9,9 @@ import subprocess
 import json
 import argparse
 import logging
+import google.generativeai as genai
+
+
 
 
 def get_debug_info():
@@ -62,6 +66,10 @@ if __name__ == "__main__":
 
     logger.debug("path:" + os.environ['PATH'])
 
+    if not shutil.which("ffmpeg"):
+        sys.stderr.write("ffmpeg not found on the system.")
+        sys.exit(1)
+
     if args.command == 'cleanUp':
         remove_temp_files()
         logger.debug("Temporary files removed.")
@@ -69,7 +77,11 @@ if __name__ == "__main__":
 
     elif args.command == 'generateVideo':
         logger.debug("Generating video...")
-        generate_video(args.input_json_path, args.output_path)
+        try:
+            generate_video(args.input_json_path, args.output_path)
+        except Exception as e:
+            sys.stderr.write(str(e))
+            sys.exit(1)
         logger.debug("Video generated.")
         sys.exit(0)
 
@@ -94,11 +106,19 @@ if __name__ == "__main__":
 
         if args.command == 'generateSummaries':
             logger.debug("Generating summaries...")
-            generate_summaries(args.input_json_path, args.output_path, client)
+            try:
+              generate_summaries(args.input_json_path, args.output_path, client)
+            except Exception as e:
+                sys.stderr.write(str(e))
+                sys.exit(1)
             logger.debug("Summaries generated.")
         else:  # generateStoryline
             logger.debug("Generating storyline...")
-            generate_storyline(args.input_json_path, args.output_path, client)
+            try:
+              generate_storyline(args.input_json_path, args.output_path, client)
+            except Exception as e:
+                sys.stderr.write(str(e))
+                sys.exit(1)
             logger.debug("Storyline generated.")
 
     else:

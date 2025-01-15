@@ -16,8 +16,9 @@ const isDebug =
   process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 const vidSage = isDebug
-  ? path.join('../..', 'assets/bin')
+  ? path.join(app.getAppPath(), 'assets/bin')
   : path.join(process.resourcesPath, 'assets/bin');
+
 
 const mainPath = process.platform === 'win32' ? 'main.exe' : 'main';
 
@@ -199,7 +200,7 @@ async function generateVideo(
   await new Promise<void>((resolve, reject) => {
     execFile(
       vidSageBinary,
-      ['generateVideo', inputJSONAbsPath, outputVideoAbsPath, storedApiKey],
+      ['generateVideo', inputJSONAbsPath, outputVideoAbsPath],
       (error, stdout, stderr) => {
         if (error) {
           return reject(error);

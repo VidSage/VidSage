@@ -23,12 +23,16 @@ const { TextArea } = Input;
 function VideoSummary() {
   const navigate = useNavigate();
 
-  const storyline = useAtomValue(storylineAtom);
+  const [storyline, setStorylineAtom] = useAtom(storylineAtom);
   const [preview, setPreviewAtom] = useAtom(previewAtom);
   const summaries = useAtomValue(summaryAtom);
   const videoClipRef = useRef<HTMLVideoElement>(null);
   const [generatingPreview, setGeneratingPreview] = useState(false);
   const [updatingStoryline, setUpdatingStoryline] = useState(false);
+
+  const [prompt, setPrompt] = useState('');
+
+  const duration = 3;
 
   const [selectedClip, setSelectedClip] = useState<number | null>(null);
 
@@ -49,9 +53,36 @@ function VideoSummary() {
   const updateStoryline = async () => {
     setUpdatingStoryline(true);
     // TODO: Update the storyline based on the user input
-    await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+    const newStoryline = await window.electron.ipcRenderer.invoke(
+      'gen-storyline',
+      {
+        prompt,
+        duration,
+        summaries,
+      },
+    );
+    if (!newStoryline.success) {
+      throw new Error(newStoryline.error || 'Failed to generate storyline');
+    }
+    setUpdatingStoryline(false);
+    setStorylineAtom(newStoryline.data);
+
     message.success('Storyline updated successfully');
     setUpdatingStoryline(false);
+  };
+
+  const handleStorylineUpdate = async () => {
+    try {
+      if (!prompt) {
+        message.error('Please provide a prompt to update the storyline');
+        return;
+      }
+      await updateStoryline();
+      window.location.reload();
+    } catch (error) {
+      message.error('Failed to update the storyline');
+      setUpdatingStoryline(false);
+    }
   };
 
   const handleSave = async () => {
@@ -192,6 +223,7 @@ function VideoSummary() {
             maxWidth: '800px',
             margin: '10px auto', // Center-align horizontally
           }}
+          onChange={(e) => setPrompt(e.target.value)}
         />
         <Button
           type="primary"
@@ -201,7 +233,7 @@ function VideoSummary() {
             marginLeft: 'auto', // Center-align button
             marginRight: 'auto',
           }}
-          onClick={() => updateStoryline()}
+          onClick={() => handleStorylineUpdate()}
           loading={updatingStoryline}
         >
           Update Storyline

@@ -130,31 +130,41 @@ ipcMain.on('ipc-example', async (event, arg) => {
 });
 
 ipcMain.handle('gen-summary', async (event, args) => {
-  const summaries = await generateSummaries(
-    {
-      taskId: generateTimestampedUUID(),
-      files: args,
-    },
-    storedApiKey!,
-    storedAzureCredentials,
-    useAzure,
-  );
-  return summaries;
+  try {
+    const summaries = await generateSummaries(
+      {
+        taskId: generateTimestampedUUID(),
+        files: args,
+      },
+      storedApiKey!,
+      storedAzureCredentials,
+      useAzure,
+    );
+    return { success: true, data: summaries };
+  } catch (error: any) {
+    console.error('Failed to generate summaries:', error);
+    return { success: false, error: error.message || 'unknown error' };
+  }
 });
 
 ipcMain.handle('gen-storyline', async (event, args) => {
-  const segments = await generateStoryline(
-    {
-      taskId: generateTimestampedUUID(),
-      summaries: args.summaries,
-      prompt: args.prompt,
-      duration: args.duration,
-    },
-    storedApiKey,
-    storedAzureCredentials,
-    useAzure,
-  );
-  return segments;
+  try {
+    const segments = await generateStoryline(
+      {
+        taskId: generateTimestampedUUID(),
+        summaries: args.summaries,
+        prompt: args.prompt,
+        duration: args.duration,
+      },
+      storedApiKey!,
+      storedAzureCredentials,
+      useAzure,
+    );
+    return { success: true, data: segments };
+  } catch (error: any) {
+    console.error('Failed to generate storyline:', error);
+    return { success: false, error: error.message || 'unknown error' };
+  }
 });
 
 ipcMain.handle('gen-video', async (event, args) => {

@@ -1,5 +1,4 @@
 import os
-import sys
 from typing import List
 from scenedetect import detect, HashDetector
 import shutil
@@ -9,10 +8,9 @@ from videoObjects import VideoFile, Segment, VideoSummary, Story, Scene, Descrip
 import logging
 
 
-logger = logging.getLogger(__name__)
-
-
 def generate_summaries(input_json_path: str, output_json_path: str, llm_client, LLM_IMG_LIMIT = 50) -> bool:
+
+
     """Generates video summaries based on input JSON."""
     args = read_json_file(input_json_path)
     task_id = args['taskId']
@@ -25,12 +23,12 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
     scenes = {}
 
     #preprocess the video files and detect scenes
-    logger.debug("Preprocessing videos...")
+    logging.debug("Preprocessing videos...")
     for file in files:
         input_vid_path = file['absolutePath']
         filename = os.path.basename(input_vid_path)
         output_vid_path = f'{task_folder}/{filename}'
-        logger.debug(f"Preprocessing video: {input_vid_path}")
+        logging.debug(f"Preprocessing video: {input_vid_path}")
         preprocess_video(input_vid_path, output_vid_path)
 
         scene_list = detect(output_vid_path, HashDetector(threshold=0.45))
@@ -40,14 +38,14 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
 
         scenes[file['absolutePath']] = scene_sec
         os.remove(output_vid_path)
-    logger.debug("Preprocessing complete.")
+    logging.debug("Preprocessing complete.")
 
-    logger.debug("Generating summaries...")
+    logging.debug("Generating summaries...")
     #generate summaries
     summaries = []
     for file in files:
         input_vid_path = file['absolutePath']
-        logger.debug(f"Generating summary for video: {input_vid_path}")
+        logging.debug(f"Generating summary for video: {input_vid_path}")
         frames = extract_frames_fixed(input_vid_path)
         reduced_frames = reduce_resolution(frames, 1280, 720)
         encoded_frames = base64_encode_frames(reduced_frames)
@@ -101,14 +99,14 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
                         ratings.append(desc.aestheticRating)
                         break
                     except Exception as e:
-                        logger.error(e)
+                        logging.error(e)
                         messages[1]['content'][0]['text'] += "\n Your last response was filtered by the Azure content filter. Please avoid using inappropriate language."
 
             if output_messages:
                 segment.description = output_messages[-1]
             segments.append(segment)
-            logger.debug(f"Segment from {startTimeSec} to {endTimeSec} seconds: {segment.description}")
-            logger.debug(f"Rating: {ratings[-1]}")
+            logging.debug(f"Segment from {startTimeSec} to {endTimeSec} seconds: {segment.description}")
+            logging.debug(f"Rating: {ratings[-1]}")
 
         whole = ''
         for segment in segments:
@@ -138,7 +136,7 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
                 whole_summary = response.choices[0].message.content
                 break
             except Exception as e:
-                logger.error(e)
+                logging.error(e)
                 messages[0]['content'][0]['text'] += "\n Your last response was filtered by the Azure content filter. Please avoid using inappropriate language."
 
         rating = round(sum(ratings) / len(ratings))
@@ -198,7 +196,6 @@ def generate_storyline(input_json_path: str, output_json_path: str, llm_client) 
             """
         }
     )
-    out_story = None
     for _ in range(2):
       try:
           response = llm_client.beta.chat.completions.parse(
@@ -213,9 +210,6 @@ def generate_storyline(input_json_path: str, output_json_path: str, llm_client) 
           logging.error(e)
           messages[1]['content'][0]['text'] += "\n Your last response was filtered by the Azure content filter. Please avoid using inappropriate language."
 
-    if not out_story:
-        raise Exception("Failed to generate a storyline.")
-
     storyline = []
 
     tmp_folder = f'./tmp/{task_id}/clips'
@@ -223,7 +217,7 @@ def generate_storyline(input_json_path: str, output_json_path: str, llm_client) 
     for scene in out_story.scenes:
         input_vid_path = scene.file_path
         if not os.path.exists(input_vid_path):
-            logger.error(f"File {input_vid_path} does not exist.")
+            logging.error(f"File {input_vid_path} does not exist.")
             continue
         # use ffmpeg to extract the scene
         filename = os.path.basename(input_vid_path)

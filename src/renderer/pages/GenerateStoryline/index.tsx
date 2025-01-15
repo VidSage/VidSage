@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography, Input, Button, Space, InputNumber } from 'antd';
+import { Typography, Input, Button, Space, InputNumber, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
 import storylineAtom from '../../states/storyline';
@@ -32,8 +32,11 @@ function GenerateStoryline() {
         summaries: summary,
       },
     );
+    if (!storyline.success) {
+      throw new Error(storyline.error || 'Failed to generate storyline');
+    }
     setLoading(false);
-    setStorylineAtom(storyline);
+    setStorylineAtom(storyline.data);
   };
 
   const handleBack = () => {
@@ -43,7 +46,11 @@ function GenerateStoryline() {
   const handleGenerate = () => {
     generateStoryline()
       .then(() => navigate('/summary'))
-      .catch(console.error);
+      .catch((err) => {
+        message.error(err.message || 'Failed to generate storyline');
+        console.error(err);
+        setLoading(false);
+      });
   };
 
   return (
