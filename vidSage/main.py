@@ -95,7 +95,11 @@ if __name__ == "__main__":
 
         # Instantiate the client
         if provider == 'openai':
-            client = OpenAI(api_key=args.api_key)
+            # client = OpenAI(api_key=args.api_key)
+            client = OpenAI(
+              api_key=args.api_key,
+              base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+          )
         else:
             client = AzureOpenAI(
                 api_key=args.api_key,

@@ -65,8 +65,8 @@ async function validateOpenAiKey(apiKey: string): Promise<boolean> {
     // Example: set the API key and try a minimal call
     const openai = new OpenAI({ apiKey });
 
-    // Minimal call to check validity, e.g. list models
-    await openai.models.list();
+    // // Minimal call to check validity, e.g. list models
+    // await openai.models.list();
     return true;
   } catch (error: any) {
     console.error('API key validation failed:', error);

@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def generate_summaries(input_json_path: str, output_json_path: str, llm_client, LLM_IMG_LIMIT = 50) -> bool:
+def generate_summaries(input_json_path: str, output_json_path: str, llm_client, LLM_IMG_LIMIT = 1000) -> bool:
     """Generates video summaries based on input JSON."""
     args = read_json_file(input_json_path)
     task_id = args['taskId']
@@ -91,7 +91,7 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
                 for _ in range(3):
                     try:
                         response = llm_client.beta.chat.completions.parse(
-                            model="gpt-4o",
+                            model="gemini-2.0-flash-exp",
                             response_format=Description,
                             messages=messages,
                             max_tokens=4000
@@ -131,7 +131,7 @@ def generate_summaries(input_json_path: str, output_json_path: str, llm_client, 
         for _ in range(3):
             try:
                 response = llm_client.chat.completions.create(
-                    model="gpt-4o",
+                    model="gemini-2.0-flash-exp",
                     messages=messages,
                     max_tokens=4000
                 )
@@ -202,7 +202,7 @@ def generate_storyline(input_json_path: str, output_json_path: str, llm_client) 
     for _ in range(2):
       try:
           response = llm_client.beta.chat.completions.parse(
-              model="gpt-4o",
+              model="gemini-2.0-flash-exp",
               response_format=Story,
               messages=messages,
               max_tokens=2000
